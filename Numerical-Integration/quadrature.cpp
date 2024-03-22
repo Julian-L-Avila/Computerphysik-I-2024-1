@@ -48,18 +48,31 @@ double simpsonIntegral(double lowerLimit, double upperLimit, int N) {
 	return h2 * sum / 3;
 }
 
-int main() {
+double errorFunction(double exactValue, double approxValue) {
+	return std::abs(exactValue - approxValue) * 100 / exactValue;
+}
 
-	std::ofstream datafile("results.dat");
+void saveDataToFile(const std::string& filename, int N) {
+	std::ofstream datafile(filename);
 
 	for (int N = 1; N <= MaxN; ++N){
 		double integralrect = rectangularIntegral(LowerLimit, UpperLimit, N);
 		double integraltrap = trapezoidIntegral(LowerLimit, UpperLimit, N);
 		double integralsimpson = simpsonIntegral(LowerLimit, UpperLimit, N);
+		double errorRect = errorFunction(ExactIntegral, integralrect);
+		double errorTrap = errorFunction(ExactIntegral, integraltrap);
+		double errorSimpson = errorFunction(ExactIntegral, integralsimpson);
 
-		datafile << N << '\t' << ExactIntegral << '\t' << integralrect << '\t' << integraltrap << '\t' << integralsimpson << std::endl;
+		datafile << N << '\t' << ExactIntegral << '\t' << integralrect << '\t'
+			<< integraltrap << '\t' << integralsimpson << '\t' << errorRect << '\t'
+			<< errorTrap << '\t' << errorSimpson << '\t' << std::endl;
 	}
+
 	datafile.close();
+}
+
+int main() {
+	saveDataToFile("results.dat",MaxN);
 
 	std::ofstream scriptFile1("numerical-integration.gnu");
 	scriptFile1 << "set term pdfcairo\n"
@@ -68,7 +81,7 @@ int main() {
 		<< "set xlabel 'N'\n"
 		<< "set ylabel 'Numerical Approx'\n"
 		<< "set logscale x\n"
-		<< "p 'results.dat' u 1:2 w l tit 'Exact Integral', 'results.dat' u 1:3 w l tit 'Rectangular Approx', 'results.dat' u 1:4 w l tit 'Trapezoid Approx.', 'results.dat' u 1:5 w l tit 'Simpson Approx.'\n";
+		<< "p 'results.dat' u 1:2 w l tit 'Exact Integral', 'results.dat' u 1:3 w l tit 'Rectangular Approx.', 'results.dat' u 1:4 w l tit 'Trapezoid Approx.', 'results.dat' u 1:5 w l tit 'Simpson Approx.'\n";
 	scriptFile1.close();
 
 	std::ofstream datafile2("dataRectangular.dat");
@@ -91,10 +104,21 @@ int main() {
 		<< "p f(x) tit 'Function', 'dataRectangular.dat' u 1:2 w boxes tit 'Rectangles'\n";
 	scriptFile2.close();
 
+	std::ofstream scriptFile3("errorplot.gnu");
+	scriptFile3 << "set term pdfcairo\n"
+		<< "set output 'Error.pdf'\n"
+		<< "set grid\n"
+		<< "set xlabel 'N'\n"
+		<< "set ylabel 'error (%)'\n"
+		<< "set logscale x\n"
+		<< "set logscale y\n"
+		<< "p 'results.dat' u 1:6 w l tit 'Rectangular', 'results.dat' u 1:7 w l tit 'Trapezoid', 'results.dat' u 1:8 w l tit 'Simpson'\n";
+	scriptFile3.close();
+
 	system("gnuplot -p 'numerical-integration.gnu'");
 	system("gnuplot -p 'rectangles.gnu'");
+	system("gnuplot -p 'errorplot.gnu'");
 	std::cout << "Data saved and Ploted" << std::endl;
-
 
 	return 0;
 }
