@@ -42,7 +42,7 @@ void  saveDataToFile(double initalx, double initialy, double stepSize, double up
 
 	for (int i = 1; i < N; ++i) {
 		datafile << x << '\t' << y << '\t' << yTaylorh << std::endl;
-		yTaylorh += taylorSolution(x, yTaylorh, stepSize);
+		yTaylorh = taylorSolution(x, yTaylorh, stepSize);
 		x += stepSize;
 		y = analyticSolution(x);
 	}
