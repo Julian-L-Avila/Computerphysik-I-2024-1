@@ -29,7 +29,7 @@ double thirdDerivative(double x, double y) {
 double taylorSolution(double x, double y, double stepSize) {
 	double stepSizeSquare = stepSize * stepSize;
 	double stepSizeCube = stepSizeSquare * stepSize;
-	return x + stepSize * firstDerivative(x, y) + 0.5 * stepSizeSquare * secondDerivative(x, y) + (1.0 / 6) * stepSizeCube * thirdDerivative(x, y);
+	return y + stepSize * firstDerivative(x, y) + 0.5 * stepSizeSquare * secondDerivative(x, y) + (1.0 / 6) * stepSizeCube * thirdDerivative(x, y);
 }
 
 void  saveDataToFile(double initalx, double initialy, double stepSize, double upperLimit, double lowerLimit, const std::string& filename) {
@@ -43,8 +43,8 @@ void  saveDataToFile(double initalx, double initialy, double stepSize, double up
 	for (int i = 1; i < N; ++i) {
 		datafile << x << '\t' << y << '\t' << yTaylorh << std::endl;
 		yTaylorh += taylorSolution(x, yTaylorh, stepSize);
-		y = analyticSolution(x);
 		x += stepSize;
+		y = analyticSolution(x);
 	}
 	datafile.close();
 }
