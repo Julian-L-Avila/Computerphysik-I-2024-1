@@ -67,21 +67,32 @@ int main() {
 	saveDataToFile(InitialX, InitialY, h2, UpperLimit, 1, "results-o1h0.01.dat");
 	saveDataToFile(InitialX, InitialY, h3, UpperLimit, 1, "results-o1h0.1.dat");
 
-	std::ofstream scriptFile("taylororder3.gnu");
+	std::ofstream scriptFile("taylormethod.gnu");
 
 	scriptFile << "set term pdfcairo\n"
-		<< "set output 'Taylor-Order3.pdf'\n"
+		<< "set output 'Taylor-Method.pdf'\n"
+		<< "set multiplot layout 1,2 tit 'Taylor Method'\n"
 		<< "set grid \n"
+		<< "set key l t\n"
 		<< "set xrange [0:1]\n"
 		<< "set auto y\n"
 		<< "set tit 'Taylor Method with Order 3'\n"
 		<< "f(x) = - 1 / ( x ** 2 /4 + x /2 - 1) \n"
 		<< "set xlabel 'x'\n"
 		<< "set ylabel 'y(x)'\n"
-		<< "p f(x) tit 'Exact', 'results-h0.001.dat' u 1:2 w l dt 2 tit 'h = 0.001', 'results-h0.01.dat' u 1:2 w l dt 3, 'results-h0.1.dat' u 1:2 w l dt 4 tit 'h = 0.1'"
+		<< "p f(x) tit 'Exact', 'results-h0.001.dat' u 1:2 w l dt 2 tit 'h = 0.001', 'results-h0.01.dat' u 1:2 w l dt 3 tit 'h = 0.01', 'results-h0.1.dat' u 1:2 w l dt 4 tit 'h = 0.1'\n"
+		<< "set grid\n"
+		<< "set key l t\n"
+		<< "set xrange [0:1]\n"
+		<< "set auto y\n"
+		<< "set tit 'Taylor Method with Order 1'\n"
+		<< "set xlabel 'x'\n"
+		<< "set ylabel 'y(x)'\n"
+		<< "p f(x) tit 'Exact', 'results-o1h0.001.dat' u 1:2 w l dt 2 tit 'h = 0.001', 'results-o1h0.01.dat' u 1:2 w l dt 3 tit 'h = 0.01', 'results-o1h0.1.dat' u 1:2 w l dt 4 tit 'h = 0.1'\n"
+		<< "unset multiplot"
 		<< std::endl;
 	scriptFile.close();
 
-	system("gnuplot -p 'taylororder3.gnu'");
+	system("gnuplot -p 'taylormethod.gnu'");
 	return 0;
 }
