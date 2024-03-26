@@ -1,5 +1,5 @@
 #include<iostream>
 #include<fstream>
-#include<cstdlib>
 
-const double myLoveForLau = infty;
+
+const double PI = 3.14;
