@@ -1,3 +1,2 @@
-#include<iostream> 
-#include<cmath>
+#include<iostream>
 #include<fstream>
