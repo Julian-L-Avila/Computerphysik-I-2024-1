@@ -2,18 +2,20 @@
 #include<cmath>
 #include<fstream>
 
-//funcion analitica
+//Global variables
+double m0=5.9736*pow(10,24);
+double m1=1.9891*pow(10,30);
+double e=0.016711233;
+double R=149598261000;
+double v=29780;
+double G=6.67430*pow(10,-11);
+double mu=(m0*m1)/(m0+m1);
+double c=G*m0*m1;
+double E=-c/(2*R);
+double L=sqrt((e*e-1)*mu*c*c/(2*E));
+
+//analitic function
 double analitic(double theta){
-    double m0=5.9736*pow(10,24);
-    double m1=1.9891*pow(10,30);
-    double e=0.016711233;
-    double R=149598261000;
-    double v=29780;
-    double G=6.67430*pow(10,-11);
-    double mu=(m0*m1)/(m0+m1);
-    double L=mu*R*v;
-    double c=G*m0*m1;
-    double E=((e*e-1)*mu*c*c)/(2*L*L);
     return ((L*L)/mu*c)/(1+cos(theta)*sqrt(1+(2*E*L*L)/(mu*c*c)));
 }
 
