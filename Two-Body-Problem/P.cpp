@@ -3,12 +3,11 @@
 #include<fstream>
 
 //Global variables
-double m0=5.9736*std::pow(10,24);
-double m1=1.9891*std::pow(10,30);
+double m0=3*std::pow(10,-6);
+double m1=1;
 double e=0.016711233;
-double R=149598261000;
-double v=29780;
-double G=6.67430*std::pow(10,-11);
+double R=1;
+double G=39.478;
 double mu=(m0*m1)/(m0+m1);
 double c=G*m0*m1;
 double E=-c/(2*R);
