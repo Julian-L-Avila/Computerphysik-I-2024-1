@@ -3,7 +3,7 @@
 #include<fstream>
 
 //funcion analitica
-double analitica(double theta){
+double analitic(double theta){
     double m0;
     double m1;
     double e;
