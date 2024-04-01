@@ -192,5 +192,22 @@ int main() {
 	datafileT.close();
 	datafileS.close();
 	datafileG.close();
+
+	std::ofstream analiticplot("analytic.gnu");
+
+	analiticplot << "set term pdfcairo" << '\n'
+		<< "set output 'analytic.pdf'" << '\n'
+		<< "set grid" << '\n'
+		<< "set parametric" << '\n'
+		<< "set xlabel 'x (AU)'" << '\n'
+		<< "set ylabel 'y (AU)'" << '\n'
+		<< "set tit 'Analytic Solution'" << '\n'
+		<< "a = " << SemimajorAxis << '\n'
+		<< "e = " << Eccentricity << '\n'
+		<< "r(t) = a / (1 + e*cos(t))" << '\n'
+		<< "p (r(t)*cos(t)),(r(t)*sin(t)) w l tit 'Analytic solution'" 
+		<< std::endl;
+
+	system("gnuplot -p 'analytic.gnu'");
 	return 0;
 }
