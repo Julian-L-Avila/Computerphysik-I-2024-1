@@ -5,7 +5,6 @@
 
 const bool   ActiveLog       = true;
 const double SemimajorAxis   = 5.0;
-const double InitialTheta    = 0.0; // Rad
 const double Mass1           = 1.0; // Solar Masses
 const double Mass2           = 0.9; // Solar Masses
 const double Eccentricity    = 0.5;
@@ -37,6 +36,37 @@ double rectangularMethod(double lowerLimit, double upperLimit, double stepSize, 
 	return stepSize * sum;
 }
 
+double trapezoidMethod(double lowerLimit, double upperLimit, double stepSize, double (*function)(double x)) {
+	stepSize = stepSize / RectangleNumber;
+	double sum = 0.5 * (function(lowerLimit) + function(upperLimit));
+
+	for (double r = lowerLimit + stepSize; r <= upperLimit - stepSize; r += stepSize) {
+		sum += function(r);
+	}
+	return stepSize * sum;
+}
+
+double simpsonMethod(double lowerLimit, double upperLimit, double stepSize, double (*function)(double x)) {
+	stepSize = stepSize / RectangleNumber;
+	double halfStepSize = 0.5 * stepSize;
+	double sum = function(lowerLimit) + function(upperLimit);
+
+	for (double r = lowerLimit; r <= upperLimit - stepSize; r += stepSize) {
+		sum += 4 * function(r + halfStepSize) + 2 * function(r);
+	}
+	return halfStepSize * sum / 3.0;
+}
+
+double gaussMethod(double lowerLimit, double upperLimit, double stepSize, double (*function)(double x)) {
+	stepSize = stepSize / RectangleNumber;
+	double innerCoefficient1 = (upperLimit - lowerLimit) * 0.5;
+	double innerCoefficient2 = (upperLimit + lowerLimit) * 0.5;
+	double r1 = 1.0 / std::sqrt(3);
+	double r2 = -r1;
+
+	return innerCoefficient1 * (function(innerCoefficient1 * r2 + innerCoefficient2) + function(innerCoefficient1 * r1 + innerCoefficient2));
+}
+
 void log() {
 	std::time_t currentTime = std::time(nullptr);
 
@@ -48,7 +78,6 @@ void log() {
 		<< "Time and Date of Simulation             = " << timeString << '\n'
 		<< "-------------------------- Constants --------------------------" << '\n'
 		<< "Inital distances (AU)                   = " << InitialDistance << '\n'
-    << "Initial Angle (rad)                     = " << InitialTheta << '\n'
     << "Eccentricity                            = " << Eccentricity << '\n'
     << "Mass Object 1 (Solar Mass)              = " << Mass1 << '\n'
     << "Mass Object 2 (Solar Mass)              = " << Mass2 << '\n'
@@ -72,9 +101,13 @@ void log() {
 }
 
 int main() {
-	double finalfowardr, finaltheta;
+	double finalfowardr, finalthetaRectanglar, finalthetaTrapezoid, finalthetaSimpson, finalthetaGauss;
 
-	std::ofstream datafile("datrectangualr.dat");
+	std::ofstream datafileR("datrectangular.dat");
+	std::ofstream datafileT("dattrapezoid.dat");
+	std::ofstream datafileS("datsimpson.dat");
+	std::ofstream datafileG("datgauss.dat");
+
 	std::cout << "Started Script" << std::endl;
 
 	if (ActiveLog) {
@@ -85,50 +118,79 @@ int main() {
 	std::cout << "Initial r = " << InitialDistance << std::endl;
 
 	for (double r = InitialDistance; r <= SemimajorAxis / (1 - Eccentricity); r += StepSize) {
-		double deltatheta = InitialTheta;
+		double deltathetaRectangular, deltathetaTrapezoid, deltathetaSimpson, deltathetaGauss;
 
-		deltatheta += AngularMomentum * rectangularMethod(r, r + StepSize, StepSize, positionIntegralFunction);
+		deltathetaRectangular += AngularMomentum * rectangularMethod(r, r + StepSize, StepSize, positionIntegralFunction);
+		deltathetaTrapezoid   += AngularMomentum * trapezoidMethod(r, r + StepSize, StepSize, positionIntegralFunction);
+		deltathetaSimpson     += AngularMomentum * simpsonMethod(r, r + StepSize, StepSize, positionIntegralFunction);
+		deltathetaGauss       += AngularMomentum * gaussMethod(r, r + StepSize, StepSize, positionIntegralFunction);
 
-		if (std::isnan(deltatheta)) {
+		if (std::isnan(deltathetaRectangular)) {
 			std::cout << "Error at r = " << r << '\n'
 				<< "Problem Part = " << 2 * ReducedMass * r * (Energy * r + PotentialConstant) << std::endl;
 			break;
 		}
 
-		datafile << std::setprecision(desiredPrecision)
+		datafileR << std::setprecision(desiredPrecision)
 			<< r + StepSize << '\t' 
-			<< deltatheta << '\t' 
-			<< (r + StepSize) * std::cos(deltatheta) << '\t' 
-			<< (r + StepSize) * std::sin(deltatheta) 
+			<< deltathetaRectangular << '\t' 
+			<< (r + StepSize) * std::cos(deltathetaRectangular) << '\t' 
+			<< (r + StepSize) * std::sin(deltathetaRectangular) 
 			<< std::endl;
-		
-		finalfowardr = r;
-		finaltheta = deltatheta;
 
+		datafileT << std::setprecision(desiredPrecision)
+			<< r + StepSize << '\t' 
+			<< deltathetaTrapezoid << '\t' 
+			<< (r + StepSize) * std::cos(deltathetaTrapezoid) << '\t' 
+			<< (r + StepSize) * std::sin(deltathetaTrapezoid) 
+			<< std::endl;
+
+		datafileS << std::setprecision(desiredPrecision)
+			<< r + StepSize << '\t' 
+			<< deltathetaSimpson << '\t' 
+			<< (r + StepSize) * std::cos(deltathetaSimpson) << '\t' 
+			<< (r + StepSize) * std::sin(deltathetaSimpson) 
+			<< std::endl;
+
+		datafileG << std::setprecision(desiredPrecision)
+			<< r + StepSize << '\t' 
+			<< deltathetaGauss << '\t' 
+			<< (r + StepSize) * std::cos(deltathetaGauss) << '\t' 
+			<< (r + StepSize) * std::sin(deltathetaGauss) 
+			<< std::endl;
+
+		finalfowardr         = r;
+		finalthetaRectanglar = deltathetaRectangular;
+		finalthetaTrapezoid  = deltathetaTrapezoid;
+		finalthetaSimpson    = deltathetaSimpson;
+		finalthetaGauss      = deltathetaGauss;
 	}
 
 	std::cout << "Initial r = " << finalfowardr << std::endl;
 
 	for (double r = finalfowardr;  SemimajorAxis / (1 + Eccentricity) <= r; r -=StepSize) {
-		double deltatheta = finaltheta;
+		double deltathetaRectangular, deltathetaTrapezoid, deltathetaSimpson, deltathetaGauss;
 
-		deltatheta -= AngularMomentum * rectangularMethod(r - StepSize, r, StepSize, positionIntegralFunction);
+		deltathetaRectangular -= AngularMomentum * rectangularMethod(r - StepSize, r, StepSize, positionIntegralFunction);
 
-		if (std::isnan(deltatheta)) {
+		if (std::isnan(deltathetaRectangular)) {
 			std::cout << "Error at r = " << r << '\n'
 				<< "Problem Part = " << 2 * ReducedMass * r * (Energy * r + PotentialConstant) << std::endl;
 			finalfowardr = r - StepSize;
 			break;
 		}
 
-		datafile << std::setprecision(desiredPrecision)
+		datafileR << std::setprecision(desiredPrecision)
 			<< r - StepSize << '\t' 
-			<< deltatheta << '\t' 
-			<< (r - StepSize) * std::cos(deltatheta) << '\t' 
-			<< (r - StepSize) * std::sin(deltatheta) 
+			<< deltathetaRectangular << '\t' 
+			<< (r - StepSize) * std::cos(deltathetaRectangular) << '\t' 
+			<< (r - StepSize) * std::sin(deltathetaRectangular) 
 			<< std::endl;
 	}
 
-	datafile.close();
+	datafileR.close();
+	datafileT.close();
+	datafileS.close();
+	datafileG.close();
 	return 0;
 }
