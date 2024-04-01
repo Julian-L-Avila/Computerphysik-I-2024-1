@@ -4,12 +4,11 @@
 #include <fstream>
 
 const bool   ActiveLog       = true;
-const double InitialDistance = 4.0; // Astronomical Units
+const double SemimajorAxis   = 5.0;
 const double InitialTheta    = 0.0; // Rad
 const double Mass1           = 1.0; // Solar Masses
 const double Mass2           = 0.9; // Solar Masses
-const double Eccentricity    = 0.9;
-const double SemimajorAxis   = 5.0;
+const double Eccentricity    = 0.5;
 
 const double RectangleNumber  = 10000;
 const int    desiredPrecision = 10;
@@ -20,8 +19,9 @@ const double PotentialConstant     = GravitationalConstant * Mass1 * Mass2;
 const double Energy                = PotentialConstant / (-2 * SemimajorAxis);
 const double AngularMomentum       = std::sqrt((Eccentricity * Eccentricity - 1) * ReducedMass * PotentialConstant * PotentialConstant / (2 * Energy));
 const double SquareAngularMomentum = AngularMomentum * AngularMomentum;
+const double InitialDistance       = SemimajorAxis / (1 + Eccentricity);
 
-const double StepSize = 5e-3;
+const double StepSize = Eccentricity / RectangleNumber;
 
 double positionIntegralFunction(double position) {
 	return 1 / position * std::sqrt(2 * ReducedMass * position * (Energy * position + PotentialConstant) - SquareAngularMomentum);
@@ -72,7 +72,7 @@ void log() {
 }
 
 int main() {
-	double finalfowardr;
+	double finalfowardr, finaltheta;
 
 	std::ofstream datafile("datrectangualr.dat");
 	std::cout << "Started Script" << std::endl;
@@ -84,29 +84,33 @@ int main() {
 
 	std::cout << "Initial r = " << InitialDistance << std::endl;
 
-	for (double r = InitialDistance + StepSize; r <= 100; r += StepSize) {
-		double deltatheta;
+	for (double r = InitialDistance; r <= SemimajorAxis / (1 - Eccentricity); r += StepSize) {
+		double deltatheta = InitialTheta;
 
-		deltatheta += AngularMomentum * rectangularMethod(r - StepSize, r, StepSize, positionIntegralFunction);
+		deltatheta += AngularMomentum * rectangularMethod(r, r + StepSize, StepSize, positionIntegralFunction);
 
 		if (std::isnan(deltatheta)) {
 			std::cout << "Error at r = " << r << '\n'
 				<< "Problem Part = " << 2 * ReducedMass * r * (Energy * r + PotentialConstant) << std::endl;
-			finalfowardr = r - StepSize;
 			break;
 		}
 
 		datafile << std::setprecision(desiredPrecision)
-			<< r << '\t' 
+			<< r + StepSize << '\t' 
 			<< deltatheta << '\t' 
-			<< r * std::cos(deltatheta) << '\t' 
-			<< r * std::sin(deltatheta) 
+			<< (r + StepSize) * std::cos(deltatheta) << '\t' 
+			<< (r + StepSize) * std::sin(deltatheta) 
 			<< std::endl;
+		
+		finalfowardr = r;
+		finaltheta = deltatheta;
 
 	}
 
-	for (double r = InitialDistance; 0 <= r; r -=StepSize) {
-		double deltatheta;
+	std::cout << "Initial r = " << finalfowardr << std::endl;
+
+	for (double r = finalfowardr;  SemimajorAxis / (1 + Eccentricity) <= r; r -=StepSize) {
+		double deltatheta = finaltheta;
 
 		deltatheta -= AngularMomentum * rectangularMethod(r - StepSize, r, StepSize, positionIntegralFunction);
 
@@ -118,10 +122,10 @@ int main() {
 		}
 
 		datafile << std::setprecision(desiredPrecision)
-			<< r << '\t' 
+			<< r - StepSize << '\t' 
 			<< deltatheta << '\t' 
-			<< r * std::cos(deltatheta) << '\t' 
-			<< r * std::sin(deltatheta) 
+			<< (r - StepSize) * std::cos(deltatheta) << '\t' 
+			<< (r - StepSize) * std::sin(deltatheta) 
 			<< std::endl;
 	}
 

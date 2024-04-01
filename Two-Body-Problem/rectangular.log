@@ -1,13 +1,13 @@
-Time and Date of Simulation             = Sun Mar 31 19:00:25 2024
+Time and Date of Simulation             = Mon Apr  1 08:33:50 2024
 
 -------------------------- Constants --------------------------
-Inital distances (AU)                   = 4
+Inital distances (AU)                   = 3.333333333
 Initial Angle (rad)                     = 0
-Eccentricity                            = 0.9
+Eccentricity                            = 0.5
 Mass Object 1 (Solar Mass)              = 1
 Mass Object 2 (Solar Mass)              = 0.9
 Obtital Energy (AU² * Solar Mass / yr²) = -3.553057584
-AngularMomentum (AU² * Solar Mass / yr) = 3.998594644
+AngularMomentum (AU² * Solar Mass / yr) = 7.944401984
 
 Number of rectangles                    = 10000
 Desired Precision                       = 10
@@ -16,7 +16,7 @@ Gravitacional Constant                  = 39.4784176
 Reduced Mass                            = 0.4736842105
 Potential Gravitational Constat         = 35.53057584
 
-Step size of numerical method           = 5e-07
+Step size of numerical method           = 5e-09
 
-Problem Part = 80.78530929
-Square Mommentum = 15.98875913
+Problem Part = 74.8012123
+Square Mommentum = 63.11352288
