@@ -4,12 +4,12 @@
 #include <fstream>
 
 const bool   ActiveLog       = true;
-const double InitialDistance = 1.0; // Astronomical Units
+const double InitialDistance = 4.0; // Astronomical Units
 const double InitialTheta    = 0.0; // Rad
-const double InitialVelocity = 0.5;
 const double Mass1           = 1.0; // Solar Masses
-const double Mass2           = 3.33e-6; // Solar Masses
-const double Eccentricity    = 0.5;
+const double Mass2           = 0.9; // Solar Masses
+const double Eccentricity    = 0.9;
+const double SemimajorAxis   = 5.0;
 
 const double RectangleNumber  = 10000;
 const int    desiredPrecision = 10;
@@ -17,9 +17,9 @@ const int    desiredPrecision = 10;
 const double GravitationalConstant = 4 * M_PI * M_PI;
 const double ReducedMass           = (Mass1 * Mass2) / (Mass1 + Mass2);
 const double PotentialConstant     = GravitationalConstant * Mass1 * Mass2;
-const double AngularMomentum       = InitialDistance * Mass2 * InitialVelocity;
+const double Energy                = PotentialConstant / (-2 * SemimajorAxis);
+const double AngularMomentum       = std::sqrt((Eccentricity * Eccentricity - 1) * ReducedMass * PotentialConstant * PotentialConstant / (2 * Energy));
 const double SquareAngularMomentum = AngularMomentum * AngularMomentum;
-const double Energy                = (Eccentricity * Eccentricity - 1) * PotentialConstant * PotentialConstant * Mass2 / (2 * SquareAngularMomentum);
 
 const double StepSize = 5e-3;
 
@@ -72,6 +72,8 @@ void log() {
 }
 
 int main() {
+	double finalfowardr;
+
 	std::ofstream datafile("datrectangualr.dat");
 	std::cout << "Started Script" << std::endl;
 
@@ -90,6 +92,7 @@ int main() {
 		if (std::isnan(deltatheta)) {
 			std::cout << "Error at r = " << r << '\n'
 				<< "Problem Part = " << 2 * ReducedMass * r * (Energy * r + PotentialConstant) << std::endl;
+			finalfowardr = r - StepSize;
 			break;
 		}
 
@@ -101,6 +104,27 @@ int main() {
 			<< std::endl;
 
 	}
+
+	for (double r = InitialDistance; 0 <= r; r -=StepSize) {
+		double deltatheta;
+
+		deltatheta -= AngularMomentum * rectangularMethod(r - StepSize, r, StepSize, positionIntegralFunction);
+
+		if (std::isnan(deltatheta)) {
+			std::cout << "Error at r = " << r << '\n'
+				<< "Problem Part = " << 2 * ReducedMass * r * (Energy * r + PotentialConstant) << std::endl;
+			finalfowardr = r - StepSize;
+			break;
+		}
+
+		datafile << std::setprecision(desiredPrecision)
+			<< r << '\t' 
+			<< deltatheta << '\t' 
+			<< r * std::cos(deltatheta) << '\t' 
+			<< r * std::sin(deltatheta) 
+			<< std::endl;
+	}
+
 	datafile.close();
 	return 0;
 }
