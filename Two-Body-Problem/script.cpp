@@ -24,8 +24,8 @@ const double FinalDistance         = SemimajorAxis * (1 - Eccentricity * Eccentr
 
 const double StepSize = Eccentricity / RectangleNumber;
 
-long double analyticFunction(double position) {
-	return - std::asin((1.0 / position - ReducedMass * GravitationalConstant / SquareAngularMomentum) * std::sqrt(SquareAngularMomentum * SquareAngularMomentum / (2 * ReducedMass * Energy * SquareAngularMomentum + ReducedMass * ReducedMass * PotentialConstant * PotentialConstant)));
+long double analyticFunction(double theta) {
+	return SemimajorAxis * (1 - Eccentricity * Eccentricity) / (1 + Eccentricity * std::cos(theta));
 }
 
 long double positionIntegralFunction(double position) {
@@ -74,6 +74,10 @@ long double gaussMethod(double lowerLimit, double upperLimit, double stepSize, l
 	return innerCoefficient1 * (function(innerCoefficient1 * r2 + innerCoefficient2) + function(innerCoefficient1 * r1 + innerCoefficient2));
 }
 
+long double error(double value1, double value2) {
+	return std::abs(value1 - value2) / value1;
+}
+
 void log() {
 	std::time_t currentTime = std::time(nullptr);
 
@@ -120,6 +124,7 @@ int main() {
 	std::ofstream errorG("daterrorG.dat");
 
 	std::ofstream datafileA("datanalytic.dat");
+	std::ofstream datafileabs("databserror.dat");
 
 	std::cout << "Started Script" << std::endl;
 
@@ -156,7 +161,7 @@ int main() {
 
 		errorR << std::setprecision(desiredPrecision)
 			<< r + StepSize << '\t'
-			<< deltathetaRectangular - analyticFunction(r + StepSize)
+			<< deltathetaRectangular - analyticFunction(deltathetaRectangular)
 			<< std::endl;
 
 		datafileT << std::setprecision(desiredPrecision)
@@ -169,7 +174,7 @@ int main() {
 
 		errorT << std::setprecision(desiredPrecision)
 			<< r + StepSize << '\t'
-			<< deltathetaTrapezoid - analyticFunction(r + StepSize)
+			<< deltathetaTrapezoid - analyticFunction(deltathetaTrapezoid)
 			<< std::endl;
 
 		datafileS << std::setprecision(desiredPrecision)
@@ -182,7 +187,7 @@ int main() {
 
 		errorS << std::setprecision(desiredPrecision)
 			<< r + StepSize << '\t'
-			<< deltathetaSimpson - analyticFunction(r + StepSize)
+			<< deltathetaSimpson - analyticFunction(deltathetaSimpson)
 			<< std::endl;
 
 		datafileG << std::setprecision(desiredPrecision)
@@ -195,7 +200,7 @@ int main() {
 
 		errorG << std::setprecision(desiredPrecision)
 			<< r + StepSize << '\t'
-			<< deltathetaGauss - analyticFunction(r + StepSize)
+			<< deltathetaGauss - analyticFunction(deltathetaGauss)
 			<< std::endl;
 
 		datafileA << std::setprecision(desiredPrecision)
@@ -205,6 +210,13 @@ int main() {
 			<< (r + StepSize) * std::sin(deltatheta)
 			<< std::endl;
 
+		datafileabs << std::setprecision(desiredPrecision)
+			<< r + StepSize << '\t'
+			<< error(deltathetaRectangular, deltathetaTrapezoid) << '\t'
+			<< error(deltathetaRectangular, deltathetaSimpson) << '\t'
+			<< error(deltathetaRectangular, deltathetaGauss) << '\t'
+			<< std::endl;
+
 	}
 
 	datafileR.close();
@@ -212,6 +224,7 @@ int main() {
 	datafileS.close();
 	datafileG.close();
 	datafileA.close();
+	datafileabs.close();
 
 	errorR.close();
 	errorT.close();
@@ -225,8 +238,12 @@ int main() {
 		<< "set grid" << '\n'
 		<< "set xlabel 'x (AU)'" << '\n'
 		<< "set ylabel 'y (AU)'" << '\n'
+		<< "set parametric" << '\n'
+		<< "a = " << SemimajorAxis << '\n'
+		<< "e = " << Eccentricity << '\n'
+		<< "r(t) = a * (1 - e**2) / (1 + e*cos(t))" << '\n'
 		<< "set tit 'Analytic Solution'" << '\n'
-		<< "p 'datanalytic.dat' u 3:4 w l tit 'Analytic solution'" 
+		<< "p r(t)*cos(t),r(t)*sin(t) tit 'Analytic solution'" 
 		<< std::endl;
 
 	analyticplot.close();
@@ -283,11 +300,27 @@ int main() {
 
 	gaussplot.close();
 
+	std::ofstream errorplot("error.gnu");
+
+	errorplot << "set term pdfcairo" << '\n'
+		<< "set output 'error.pdf'" << '\n'
+		<< "set grid" << '\n'
+		<< "set xlabel 'x (AU)'" << '\n'
+		<< "set ylabel 'y (AU)'" << '\n'
+		<< "set auto xy" << '\n'
+		<< "set logscale y" << '\n'
+		<< "set tit 'Relative Percentage Error (Compared to Rectangular Rule)" << '\n'
+		<< "p 'databserror.dat' u 1:2 w l tit 'Trapezoid', '' u 1:3 w l tit 'Simpson', '' u 1:4 w l tit 'Gauss'"
+		<< std::endl;
+
+	errorplot.close();
+
 	system("gnuplot -p 'analytic.gnu'");
 	system("gnuplot -p 'rectangular.gnu'");
 	system("gnuplot -p 'trapezoid.gnu'");
 	system("gnuplot -p 'simpson.gnu'");
 	system("gnuplot -p 'gauss.gnu'");
+	system("gnuplot -p 'error.gnu'");
 
 	return 0;
 }
