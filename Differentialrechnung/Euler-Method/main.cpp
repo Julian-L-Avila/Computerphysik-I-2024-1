@@ -1,8 +1,8 @@
 #include <iomanip>
-#include<iostream>
-#include<cmath>
-#include<ostream>
-#include<fstream>
+#include <iostream>
+#include <cmath>
+#include <ostream>
+#include <fstream>
 
 const double Initial_Time       = 0.0;
 const double Initial_Velocity   = 0.0;
@@ -37,9 +37,8 @@ int main() {
 	double approx_velocity = Initial_Velocity;
 
 	system("clear");
-	system("mkdir Data");
 
-	std::cout << "Starting script" << std::endl;
+	std::cout << "Starting script" << '\n';
 
 	std::ofstream datafile("dat-velocity-euler.dat");
 	datafile << "Time (s)" << '\t' << "Velocity Analytic (m/s)" << '\t' << "Velocity Euler (m/s)" << '\n'
@@ -60,8 +59,23 @@ int main() {
 
 	datafile.close();
 
-	std::cout << "End of script. Data saved" << std::endl;
+	std::cout << "Data saved" << '\n'
+		<< "Plotting velocity comparison" << '\n';
 
-	system("mv dat-velocity-euler.dat Data");
+	std::ofstream velocity_plot("plot-velocity.gnu");
+
+	velocity_plot << "set term pdfcairo" << '\n'
+		<< "set output 'velocity.pdf'" << '\n'
+		<< "set grid" << '\n'
+		<< "set auto xy" << '\n'
+		<< "set tit 'Velocity vs Time'" << '\n'
+		<< "set ylabel 'v(t) [ms^(-1)]'" << '\n'
+		<< "set xlabel 't [s]' " << '\n'
+		<< "p 'dat-velocity-euler.dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Euler Method'" << '\n';
+
+	velocity_plot.close();
+
+	std::cout << "Done" << std::endl;
+
 	return 0;
 }
