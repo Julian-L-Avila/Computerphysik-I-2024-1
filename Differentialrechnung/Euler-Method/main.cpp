@@ -26,7 +26,7 @@ double analytic_solution_velocity(double t) {
 }
 
 double analytic_solution_possition(double t) {
-	return - (Terminal_Velocity * (Terminal_Velocity * log(std::abs((Terminal_Velocity - Initial_Time) * exp((2 * Acceleration * t)/ Terminal_Velocity) + (Terminal_Velocity + Initial_Time) * exp((2* Acceleration * Initial_Time) / Terminal_Velocity))) - Acceleration * t - Terminal_Velocity * log(std::abs((Terminal_Velocity + Initial_Velocity) * exp((2 * Acceleration * Initial_Time) / Terminal_Velocity ) + Terminal_Velocity - Initial_Velocity))))/ Acceleration;
+	return -(Terminal_Velocity * (Terminal_Velocity * log(std::abs((Terminal_Velocity - Initial_Time) * exp((2 * Acceleration * t)/ Terminal_Velocity) + (Terminal_Velocity + Initial_Time) * exp((2* Acceleration * Initial_Time) / Terminal_Velocity))) - Acceleration * t - Terminal_Velocity * log(std::abs((Terminal_Velocity + Initial_Velocity) * exp((2 * Acceleration * Initial_Time) / Terminal_Velocity ) + Terminal_Velocity - Initial_Velocity))))/ Acceleration;
 }
 
 double first_derivative_velocity(double t, double v) {
@@ -49,7 +49,7 @@ double simpson_integral(double lower_limit, double upper_limit, double step_size
 }
 
 double error(double real_value, double approx_value) {
-	return std::abs((real_value - approx_value) / real_value);
+	return std::abs((real_value - approx_value) / real_value) * 100;
 }
 
 int main() {
