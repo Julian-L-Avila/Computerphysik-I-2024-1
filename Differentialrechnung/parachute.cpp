@@ -5,11 +5,11 @@
 #include <map>
 #include <string>
 
-const double kInitialTime       = 0.0;
-const double kInitialVelocity   = 0.0;
-const double kInitialPosition   = 1e3;
-const double kMass               = 70.0;
-const double kDeltaCoefficient  = 0.8;
+const double kInitialTime      = 0.0;
+const double kInitialVelocity  = 0.0;
+const double kInitialPosition  = 1e3;
+const double kMass             = 70.0;
+const double kDeltaCoefficient = 0.8;
 const double kAreaCrossSection = 0.6;
 
 const double kGravityAcceleration = 9.81;
@@ -18,7 +18,7 @@ const double kAirDensity  = 1.293;
 const double kDragCoefficient  = kAirDensity * kAreaCrossSection * kDeltaCoefficient / 2;
 const double kTerminalVelocity = std::sqrt(kMass * kGravityAcceleration / kDragCoefficient);
 
-const double kStepSize     = 1e-2;
+const double kStepSize      = 1e-2;
 const int kDesiredPrecision = 20;
 
 double FirstDerivative(double t, double v) {
@@ -53,7 +53,8 @@ double TaylorMethod(double previous_t, double previous_y, double step_size, doub
 	double step_size_square = step_size * step_size;
 	double step_size_cube = step_size_square * step_size;
 
-	return previous_y + step_size * FirstDerivative(previous_t, previous_y) + 0.5 * step_size_square * SecondDerivative(previous_t, previous_y) + (1.0 / 6) * step_size_cube * ThirdDerivative(previous_t, previous_y);
+	return previous_y + step_size * FirstDerivative(previous_t, previous_y) + 0.5 * step_size_square * SecondDerivative(previous_t, previous_y)
+		+ (1.0 / 6.0) * step_size_cube * ThirdDerivative(previous_t, previous_y);
 }
 
 double EulerMethod(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
@@ -62,6 +63,7 @@ double EulerMethod(double previous_t, double previous_y, double step_size, doubl
 
 double HeunMethod(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
 	double euler_y = EulerMethod(previous_t, previous_y, step_size, derivative);
+
 	return previous_y + 0.5 * step_size * (derivative(previous_t, previous_y) + derivative(previous_t + step_size, euler_y));
 }
 
@@ -81,15 +83,15 @@ double Error(double real_value, double value) {
 }
 
 void IterationLoop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double, double, double, double (*)(double, double))) {
-	std::cout << '\n' << "Chosen method has started ..." << std::endl;
 	double previous_velocity = initial_velocity;
 	double analytic_velocity = initial_velocity;
 	double previous_position = initial_position;
 	double velocity_error    = 0.0;
 
 	std::string velocity_datafile_name = "dat-velocity-" + method_name + ".dat";
-
 	std::ofstream velocity_datafile(velocity_datafile_name);
+
+	std::cout << '\n' << "Chosen method has started ..." << std::endl;
 
 	velocity_datafile << "# Data for " << method_name << '\n'
 		<< "# Time (s)" << '\t' << "Analytic Velocity (ms^{-1})" << '\t' << "Approx. Velocity (ms^{-1})"  << '\t' << "Relative Percentage Error" << '\n'
@@ -98,7 +100,6 @@ void IterationLoop(const std::string& method_name, double initial_time, double i
 
 	for (double time = initial_time + step_size; previous_position >= 0; time += step_size) {
 		previous_position = kInitialPosition + AnalyticSolutionPosition(time);
-
 
 		if (previous_position <= 0) {
 			std::cout << "Trooper has landed at a time = " << time << '\n'
@@ -170,7 +171,7 @@ int main() {
 		<< "set auto xy" << '\n'
 		<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << '\n'
 		<< "set output 'error-velocity-" << method_name << ".pdf'" << '\n'
-		<< "set ylabel 'error %'" << '\n'
+		<< "set ylabel 'Error %'" << '\n'
 		<< "set logscale y" << '\n'
 		<< "set auto xy" << '\n'
 		<< "p 'dat-velocity-" << method_name << ".dat' u 1:4 w l tit 'Error'" << std::endl;
