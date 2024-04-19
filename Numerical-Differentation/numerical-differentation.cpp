@@ -2,7 +2,6 @@
 // Laura Yeraldin Herrera Martinez - 20212107011
 #include<iostream>
 #include<fstream>
-#include<cmath>
 
 // Function
 double function(double x) {
