@@ -87,7 +87,7 @@ void iteration_loop(const std::string& method_name, double initial_time, double 
 	velocity_datafile << "# Data for " << method_name << '\n'
 		<< "# Time (s)" << '\t' << "Analytic Velocity (ms^{-1})" << '\t' << "Approx. Velocity (ms^{-1})"  << '\t' << "Relative Percentage Error" << '\n'
 		<< std::setprecision(desiredPrecision)
-		<< initial_time << '\t' << analytic_velocity << '\t' << previous_velocity << '\n';
+		<< initial_time << '\t' << analytic_velocity << '\t' << previous_velocity << '\t' << velocity_error << '\n';
 
 	for (double time = initial_time + step_size; previous_position >= 0; time += step_size) {
 		previous_position = Initial_Position + analytic_solution_position(time);
@@ -161,9 +161,10 @@ int main() {
 		<< "set auto xy" << '\n'
 		<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << '\n'
 		<< "set output 'error-velocity-" << method_name << ".pdf'" << '\n'
-		<< "set xlabel 'Error %'" << '\n'
-		<< "set logscale xy" << '\n'
-		<< "p 'dat-velocity-" << method_name << ".dat' u 1:3 w l tit 'Error'" << std::endl;
+		<< "set ylabel 'Error %'" << '\n'
+		<< "set logscale y" << '\n'
+		<< "set auto xy" << '\n'
+		<< "p 'dat-velocity-" << method_name << ".dat' u 1:4 w l tit 'Error'" << std::endl;
 
 	plotfile.close();
 
