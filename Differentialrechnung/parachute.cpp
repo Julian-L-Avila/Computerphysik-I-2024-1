@@ -2,11 +2,12 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
+#include <map>
+#include <string>
 
 const double Initial_Time       = 0.0;
 const double Initial_Velocity   = 0.0;
 const double Initial_Position   = 1e3;
-const double Final_Time         = 1e10;
 const double Mass               = 70.0;
 const double Delta_Coefficient  = 0.8;
 const double Area_Cross_Section = 0.6;
@@ -67,7 +68,8 @@ double heun_method(double previous_t, double previous_y, double step_size, doubl
 void runge_kutta_method() {
 }
 
-void iteration_loop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double previous_t, double previous_y, double step_size, double (*derivative)(double t, double y))) {
+void iteration_loop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double, double, double, double (*)(double, double))) {
+	std::cout << '\n' << "Chosen method has started ..." << std::endl;
 	double previous_velocity = initial_velocity;
 	double analytic_velocity = initial_velocity;
 	double previous_position = initial_position;
@@ -86,7 +88,8 @@ void iteration_loop(const std::string& method_name, double initial_time, double 
 
 
 		if (previous_position <= 0) {
-			std::cout << "Trooper has landed" << std::endl;
+			std::cout << "Trooper has landed at a time = " << time << '\n'
+				<< '\n' << "Data has been saved." << std::endl;
 			break;
 		}
 
@@ -101,36 +104,60 @@ void iteration_loop(const std::string& method_name, double initial_time, double 
 }
 
 int menu_option () {
-	std::cout << "This script solves the parachute problem with different methods, please select one: " << '\n'
+	std::cout << "This script solves the parachute problem's differential equation with different methods, please select one: " << '\n'
 		<< "1. Taylor's Method" << '\n'
 		<< "2. Euler's Method" << '\n'
 		<< "3. Heun's Method" << '\n'
-		<< "4. Runge-Kutta's Method" << '\n'
-		<< std::endl;
-	
+		<< "4. Runge-Kutta's Method" << '\n';
+
 	int option;
+	std::cout << "Press key: ";
 	std::cin >> option;
 
 	return option;
 }
 
 int main() {
-	switch (menu_option()) {
-		case 1:
-			iteration_loop("taylor", Initial_Time, Initial_Velocity, Initial_Position, Step_Size, taylor_method);
-			break;
-		case 2:
-			iteration_loop("euler", Initial_Time, Initial_Velocity, Initial_Position, Step_Size, euler_method);
-			break;
-		case 3:
-			iteration_loop("heun", Initial_Time, Initial_Velocity, Initial_Position, Step_Size, heun_method);
-			break;
-		case 4:
-			// iteration_loop("runge-kutta", Initial_Time, Initial_Velocity, Initial_Position, Step_Size, runge_kutta_method);
-			break;
-		default:
-			std::cout << "None" << '\n' << "Exit." << std::endl;
-			break;
+	std::map<int, std::string> name_option = {
+		{1, "taylor"},
+		{2, "euler"},
+		{3, "heun"},
+	};
+
+	std::map<std::string, double (*)(double, double, double, double (*)(double, double))> method_lookup = {
+			{"taylor", taylor_method},
+			{"euler", euler_method},
+			{"heun", heun_method},
+	};
+
+	system("clear");
+
+	int option = menu_option();
+	if (option < 1 || option > name_option.size()) {
+		std::cout << "No method was chosen." << '\n' << "Exit." << std::endl;
+		return 1;
 	}
+
+	const std::string& method_name = name_option[option];
+
+	iteration_loop(method_name, Initial_Time, Initial_Velocity, Initial_Position, Step_Size, method_lookup[method_name]);
+
+	std::string plotname = "plot-" + method_name + ".gnu";
+	std::string outputname = "velocity-" + method_name + ".pdf";
+
+	std::ofstream plotfile(plotname);
+
+	plotfile << "set term pdfcairo" << '\n'
+		<< "set output '" << outputname << "'" << '\n'
+		<< "set grid" << '\n'
+		<< "set ylabel 'v [ms^{-1}]'" << '\n'
+		<< "set xlabel 't [s]'" << '\n'
+		<< "set auto xy" << '\n'
+		<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << std::endl;
+
+	plotname = "gnuplot -p " + plotname;
+	const char* plotname_c = plotname.c_str();
+	system(plotname_c);
+
 	return 0;
 }
