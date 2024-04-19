@@ -69,18 +69,23 @@ double heun_method(double previous_t, double previous_y, double step_size, doubl
 void runge_kutta_method() {
 }
 
+double error(double real_value, double value) {
+	return std::abs((real_value - value) / real_value) * 100;
+}
+
 void iteration_loop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double, double, double, double (*)(double, double))) {
 	std::cout << '\n' << "Chosen method has started ..." << std::endl;
 	double previous_velocity = initial_velocity;
 	double analytic_velocity = initial_velocity;
 	double previous_position = initial_position;
+	double velocity_error    = 0.0;
 
 	const std::string velocity_datafile_name = "dat-velocity-" + method_name + ".dat";
 
 	std::ofstream velocity_datafile(velocity_datafile_name);
 
 	velocity_datafile << "# Data for " << method_name << '\n'
-		<< "# Time (s)" << '\t' << "Analytic Velocity (ms^{-1})" << "Approx. Velocity (ms^{-1})" << '\n'
+		<< "# Time (s)" << '\t' << "Analytic Velocity (ms^{-1})" << '\t' << "Approx. Velocity (ms^{-1})"  << '\t' << "Relative Percentage Error" << '\n'
 		<< std::setprecision(desiredPrecision)
 		<< initial_time << '\t' << analytic_velocity << '\t' << previous_velocity << '\n';
 
@@ -96,9 +101,10 @@ void iteration_loop(const std::string& method_name, double initial_time, double 
 
 		analytic_velocity = analytic_solution_velocity(time);
 		previous_velocity = method(time, previous_velocity, step_size, first_derivative);
+		velocity_error    = error(analytic_velocity, previous_velocity);
 
 		velocity_datafile << std::setprecision(desiredPrecision)
-			<< time << '\t' << analytic_velocity << '\t' << previous_velocity << '\n';
+			<< time << '\t' << analytic_velocity << '\t' << previous_velocity << '\t' << velocity_error << '\n';
 	}
 
 	velocity_datafile.close();
@@ -144,21 +150,27 @@ int main() {
 	iteration_loop(method_name, Initial_Time, Initial_Velocity, Initial_Position, Step_Size, method_lookup[method_name]);
 
 	std::string plotname = "plot-" + method_name + ".gnu";
-	std::string outputname = "velocity-" + method_name + ".pdf";
 
 	std::ofstream plotfile(plotname);
 
 	plotfile << "set term pdfcairo" << '\n'
-		<< "set output '" << outputname << "'" << '\n'
+		<< "set output 'velocity-" << method_name << ".pdf'" << '\n'
 		<< "set grid" << '\n'
 		<< "set ylabel 'v [ms^{-1}]'" << '\n'
 		<< "set xlabel 't [s]'" << '\n'
 		<< "set auto xy" << '\n'
-		<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << std::endl;
+		<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << '\n'
+		<< "set output 'error-velocity-" << method_name << ".pdf'" << '\n'
+		<< "set xlabel 'Error %'" << '\n'
+		<< "set logscale xy" << '\n'
+		<< "p 'dat-velocity-" << method_name << ".dat' u 1:3 w l tit 'Error'" << std::endl;
+
+	plotfile.close();
 
 	plotname = "gnuplot -p " + plotname;
 	const char* plotname_c = plotname.c_str();
 	system(plotname_c);
+
 
 	return 0;
 }
