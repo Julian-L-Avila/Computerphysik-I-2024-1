@@ -19,7 +19,7 @@ const double Drag_Coefficient  = Air_Density * Area_Cross_Section * Delta_Coeffi
 const double Terminal_Velocity = std::sqrt(Mass * Acceleration / Drag_Coefficient);
 
 const double Step_Size     = 1e-2;
-const int desiredPrecision = 10;
+const int desiredPrecision = 20;
 
 double first_derivative(double t, double v) {
 	return (Drag_Coefficient * v * v / Mass) - Acceleration;
@@ -30,7 +30,7 @@ double second_derivative(double t, double v) {
 }
 
 double third_derivative(double t, double v) {
-	return 0;
+	return 2 * Drag_Coefficient * ((first_derivative(t, v) * first_derivative(t, v)) + v * second_derivative(t, v));
 }
 
 double analytic_solution_velocity(double t) {
@@ -49,24 +49,31 @@ double analytic_solution_position(double t) {
 	return -(Terminal_Velocity * (Terminal_Velocity * log(std::abs(term1 + term2)) - Acceleration * t - Terminal_Velocity * log(std::abs(term3 + term4)))) / Acceleration;
 }
 
-double taylor_method(double previous_t, double previous_y, double step_size, double (*derivative)(double t, double y)) {
+double taylor_method(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
 	double step_size_square = step_size * step_size;
 	double step_size_cube = step_size_square * step_size;
 
 	return previous_y + step_size * first_derivative(previous_t, previous_y) + 0.5 * step_size_square * second_derivative(previous_t, previous_y) + (1.0 / 6) * step_size_cube * third_derivative(previous_t, previous_y);
 }
 
-double euler_method(double previous_t, double previous_y, double step_size, double (*derivative)(double t, double y)) {
+double euler_method(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
 	return previous_y + step_size * derivative(previous_t, previous_y);
 }
 
-double heun_method(double previous_t, double previous_y, double step_size, double (*derivative)(double t, double y)) {
+double heun_method(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
 	double euler_y = euler_method(previous_t, previous_y, step_size, derivative);
 	return previous_y + 0.5 * step_size * (derivative(previous_t, previous_y) + derivative(previous_t + step_size, euler_y));
 }
 
-// TODO Implement Runge Kutta Method
-void runge_kutta_method() {
+double runge_kutta_method(double previous_t, double previous_y, double step_size, double(*derivative)(double, double)) {
+	double k1, k2, k3, k4;
+
+	k1 = derivative(previous_t, previous_y);
+	k2 = derivative(previous_t + 0.5 * step_size, previous_y + 0.5 * step_size * k1);
+	k3 = derivative(previous_t + 0.5 * step_size, previous_y + 0.5 * step_size * k2);
+	k4 = derivative(previous_t + step_size, previous_y + step_size * k3);
+
+	return previous_y + step_size * (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;
 }
 
 double error(double real_value, double value) {
@@ -129,12 +136,14 @@ int main() {
 		{1, "taylor"},
 		{2, "euler"},
 		{3, "heun"},
+		{4, "runge-kutta"}
 	};
 
 	std::map<std::string, double (*)(double, double, double, double (*)(double, double))> method_lookup = {
 			{"taylor", taylor_method},
 			{"euler", euler_method},
 			{"heun", heun_method},
+			{"runge-kutta", runge_kutta_method}
 	};
 
 	system("clear");
