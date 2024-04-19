@@ -5,67 +5,67 @@
 #include <map>
 #include <string>
 
-const double Initial_Time       = 0.0;
-const double Initial_Velocity   = 0.0;
-const double Initial_Position   = 1e3;
-const double Mass               = 70.0;
-const double Delta_Coefficient  = 0.8;
-const double Area_Cross_Section = 0.6;
+const double kInitialTime       = 0.0;
+const double kInitialVelocity   = 0.0;
+const double kInitialPosition   = 1e3;
+const double kMass               = 70.0;
+const double kDeltaCoefficient  = 0.8;
+const double kAreaCrossSection = 0.6;
 
-const double Acceleration = 9.81;
-const double Air_Density  = 1.293;
+const double kGravityAcceleration = 9.81;
+const double kAirDensity  = 1.293;
 
-const double Drag_Coefficient  = Air_Density * Area_Cross_Section * Delta_Coefficient / 2;
-const double Terminal_Velocity = std::sqrt(Mass * Acceleration / Drag_Coefficient);
+const double kDragCoefficient  = kAirDensity * kAreaCrossSection * kDeltaCoefficient / 2;
+const double kTerminalVelocity = std::sqrt(kMass * kGravityAcceleration / kDragCoefficient);
 
-const double Step_Size     = 1e-2;
-const int desiredPrecision = 20;
+const double kStepSize     = 1e-2;
+const int kDesiredPrecision = 20;
 
-double first_derivative(double t, double v) {
-	return (Drag_Coefficient * v * v / Mass) - Acceleration;
+double FirstDerivative(double t, double v) {
+	return (kDragCoefficient * v * v / kMass) - kGravityAcceleration;
 }
 
-double second_derivative(double t, double v) {
-	return (2 * Drag_Coefficient * v * first_derivative(t, v));
+double SecondDerivative(double t, double v) {
+	return (2 * kDragCoefficient * v * FirstDerivative(t, v));
 }
 
-double third_derivative(double t, double v) {
-	return 2 * Drag_Coefficient * ((first_derivative(t, v) * first_derivative(t, v)) + v * second_derivative(t, v));
+double ThirdDerivative(double t, double v) {
+	return 2 * kDragCoefficient * ((FirstDerivative(t, v) * FirstDerivative(t, v)) + v * SecondDerivative(t, v));
 }
 
-double analytic_solution_velocity(double t) {
-	double term1 = (Initial_Velocity - Terminal_Velocity) * exp(Acceleration * (t - Initial_Time) / Terminal_Velocity);
-	double term2 = (Initial_Velocity + Terminal_Velocity) * exp(-Acceleration * (t - Initial_Time) / Terminal_Velocity);
+double AnalyticSolutionVelocity(double t) {
+	double term1 = (kInitialVelocity - kTerminalVelocity) * exp(kGravityAcceleration * (t - kInitialTime) / kTerminalVelocity);
+	double term2 = (kInitialVelocity + kTerminalVelocity) * exp(-kGravityAcceleration * (t - kInitialTime) / kTerminalVelocity);
 
-	return -Terminal_Velocity * ((term1 + term2) / (term1 - term2));
+	return -kTerminalVelocity * ((term1 + term2) / (term1 - term2));
 }
 
-double analytic_solution_position(double t) {
-	double term1 = (Terminal_Velocity - Initial_Time) * exp((2 * Acceleration * t) / Terminal_Velocity);
-	double term2 = (Terminal_Velocity + Initial_Time) * exp((2 * Acceleration * Initial_Time) / Terminal_Velocity);
-	double term3 = (Terminal_Velocity + Initial_Velocity) * exp((2 * Acceleration * Initial_Time) / Terminal_Velocity);
-	double term4 = (Terminal_Velocity - Initial_Velocity);
+double AnalyticSolutionPosition(double t) {
+	double term1 = (kTerminalVelocity - kInitialTime) * exp((2 * kGravityAcceleration * t) / kTerminalVelocity);
+	double term2 = (kTerminalVelocity + kInitialTime) * exp((2 * kGravityAcceleration * kInitialTime) / kTerminalVelocity);
+	double term3 = (kTerminalVelocity + kInitialVelocity) * exp((2 * kGravityAcceleration * kInitialTime) / kTerminalVelocity);
+	double term4 = (kTerminalVelocity - kInitialVelocity);
 
-	return -(Terminal_Velocity * (Terminal_Velocity * log(std::abs(term1 + term2)) - Acceleration * t - Terminal_Velocity * log(std::abs(term3 + term4)))) / Acceleration;
+	return -(kTerminalVelocity * (kTerminalVelocity * log(std::abs(term1 + term2)) - kGravityAcceleration * t - kTerminalVelocity * log(std::abs(term3 + term4)))) / kGravityAcceleration;
 }
 
-double taylor_method(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
+double TaylorMethod(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
 	double step_size_square = step_size * step_size;
 	double step_size_cube = step_size_square * step_size;
 
-	return previous_y + step_size * first_derivative(previous_t, previous_y) + 0.5 * step_size_square * second_derivative(previous_t, previous_y) + (1.0 / 6) * step_size_cube * third_derivative(previous_t, previous_y);
+	return previous_y + step_size * FirstDerivative(previous_t, previous_y) + 0.5 * step_size_square * SecondDerivative(previous_t, previous_y) + (1.0 / 6) * step_size_cube * ThirdDerivative(previous_t, previous_y);
 }
 
-double euler_method(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
+double EulerMethod(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
 	return previous_y + step_size * derivative(previous_t, previous_y);
 }
 
-double heun_method(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
-	double euler_y = euler_method(previous_t, previous_y, step_size, derivative);
+double HeunMethod(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
+	double euler_y = EulerMethod(previous_t, previous_y, step_size, derivative);
 	return previous_y + 0.5 * step_size * (derivative(previous_t, previous_y) + derivative(previous_t + step_size, euler_y));
 }
 
-double runge_kutta_method(double previous_t, double previous_y, double step_size, double(*derivative)(double, double)) {
+double RungeKuttaMethod(double previous_t, double previous_y, double step_size, double(*derivative)(double, double)) {
 	double k1, k2, k3, k4;
 
 	k1 = derivative(previous_t, previous_y);
@@ -76,28 +76,28 @@ double runge_kutta_method(double previous_t, double previous_y, double step_size
 	return previous_y + step_size * (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;
 }
 
-double error(double real_value, double value) {
+double Error(double real_value, double value) {
 	return std::abs((real_value - value) / real_value) * 100;
 }
 
-void iteration_loop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double, double, double, double (*)(double, double))) {
+void IterationLoop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double, double, double, double (*)(double, double))) {
 	std::cout << '\n' << "Chosen method has started ..." << std::endl;
 	double previous_velocity = initial_velocity;
 	double analytic_velocity = initial_velocity;
 	double previous_position = initial_position;
 	double velocity_error    = 0.0;
 
-	const std::string velocity_datafile_name = "dat-velocity-" + method_name + ".dat";
+	std::string velocity_datafile_name = "dat-velocity-" + method_name + ".dat";
 
 	std::ofstream velocity_datafile(velocity_datafile_name);
 
 	velocity_datafile << "# Data for " << method_name << '\n'
 		<< "# Time (s)" << '\t' << "Analytic Velocity (ms^{-1})" << '\t' << "Approx. Velocity (ms^{-1})"  << '\t' << "Relative Percentage Error" << '\n'
-		<< std::setprecision(desiredPrecision)
+		<< std::setprecision(kDesiredPrecision)
 		<< initial_time << '\t' << analytic_velocity << '\t' << previous_velocity << '\t' << velocity_error << '\n';
 
 	for (double time = initial_time + step_size; previous_position >= 0; time += step_size) {
-		previous_position = Initial_Position + analytic_solution_position(time);
+		previous_position = kInitialPosition + AnalyticSolutionPosition(time);
 
 
 		if (previous_position <= 0) {
@@ -106,18 +106,18 @@ void iteration_loop(const std::string& method_name, double initial_time, double 
 			break;
 		}
 
-		analytic_velocity = analytic_solution_velocity(time);
-		previous_velocity = method(time, previous_velocity, step_size, first_derivative);
-		velocity_error    = error(analytic_velocity, previous_velocity);
+		analytic_velocity = AnalyticSolutionVelocity(time);
+		previous_velocity = method(time, previous_velocity, step_size, FirstDerivative);
+		velocity_error    = Error(analytic_velocity, previous_velocity);
 
-		velocity_datafile << std::setprecision(desiredPrecision)
+		velocity_datafile << std::setprecision(kDesiredPrecision)
 			<< time << '\t' << analytic_velocity << '\t' << previous_velocity << '\t' << velocity_error << '\n';
 	}
 
 	velocity_datafile.close();
 }
 
-int menu_option () {
+int MenuOption () {
 	std::cout << "This script solves the parachute problem's differential equation with different methods, please select one: " << '\n'
 		<< "1. Taylor's Method" << '\n'
 		<< "2. Euler's Method" << '\n'
@@ -140,23 +140,23 @@ int main() {
 	};
 
 	std::map<std::string, double (*)(double, double, double, double (*)(double, double))> method_lookup = {
-			{"taylor", taylor_method},
-			{"euler", euler_method},
-			{"heun", heun_method},
-			{"runge-kutta", runge_kutta_method}
+			{"taylor", TaylorMethod},
+			{"euler", EulerMethod},
+			{"heun", HeunMethod},
+			{"runge-kutta", RungeKuttaMethod}
 	};
 
 	system("clear");
 
-	int option = menu_option();
+	int option = MenuOption();
 	if (option < 1 || option > name_option.size()) {
 		std::cout << "No method was chosen." << '\n' << "Exit." << std::endl;
 		return 1;
 	}
 
-	const std::string& method_name = name_option[option];
+	std::string& method_name = name_option[option];
 
-	iteration_loop(method_name, Initial_Time, Initial_Velocity, Initial_Position, Step_Size, method_lookup[method_name]);
+	IterationLoop(method_name, kInitialTime, kInitialVelocity, kInitialPosition, kStepSize, method_lookup[method_name]);
 
 	std::string plotname = "plot-" + method_name + ".gnu";
 
@@ -170,7 +170,7 @@ int main() {
 		<< "set auto xy" << '\n'
 		<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << '\n'
 		<< "set output 'error-velocity-" << method_name << ".pdf'" << '\n'
-		<< "set ylabel 'Error %'" << '\n'
+		<< "set ylabel 'error %'" << '\n'
 		<< "set logscale y" << '\n'
 		<< "set auto xy" << '\n'
 		<< "p 'dat-velocity-" << method_name << ".dat' u 1:4 w l tit 'Error'" << std::endl;
@@ -180,7 +180,6 @@ int main() {
 	plotname = "gnuplot -p " + plotname;
 	const char* plotname_c = plotname.c_str();
 	system(plotname_c);
-
 
 	return 0;
 }
