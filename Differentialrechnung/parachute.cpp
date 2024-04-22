@@ -82,6 +82,10 @@ double Error(double real_value, double value) {
 	return std::abs((real_value - value) / real_value) * 100;
 }
 
+double VoidFunction(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
+	return AnalyticSolutionVelocity(previous_t);
+}
+
 void IterationLoop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double, double, double, double (*)(double, double))) {
 	double previous_velocity = initial_velocity;
 	double analytic_velocity = initial_velocity;
@@ -120,6 +124,7 @@ void IterationLoop(const std::string& method_name, double initial_time, double i
 
 int MenuOption () {
 	std::cout << "This script solves the parachute problem's differential equation with different methods, please select one: " << '\n'
+		<< "0. Analytic Solution" << '\n'
 		<< "1. Taylor's Method" << '\n'
 		<< "2. Euler's Method" << '\n'
 		<< "3. Heun's Method" << '\n'
@@ -134,23 +139,25 @@ int MenuOption () {
 
 int main() {
 	std::map<int, std::string> name_option = {
-		{1, "taylor"},
-		{2, "euler"},
-		{3, "heun"},
-		{4, "runge-kutta"}
+		{0, "Analytic"},
+		{1, "Taylor"},
+		{2, "Euler"},
+		{3, "Heun"},
+		{4, "Runge-Kutta"}
 	};
 
 	std::map<std::string, double (*)(double, double, double, double (*)(double, double))> method_lookup = {
-			{"taylor", TaylorMethod},
-			{"euler", EulerMethod},
-			{"heun", HeunMethod},
-			{"runge-kutta", RungeKuttaMethod}
+			{"Analytic", VoidFunction},
+			{"Taylor", TaylorMethod},
+			{"Euler", EulerMethod},
+			{"Heun", HeunMethod},
+			{"Runge-Kutta", RungeKuttaMethod}
 	};
 
 	system("clear");
 
 	int option = MenuOption();
-	if (option < 1 || option > name_option.size()) {
+	if (option < 0 || option > name_option.size()) {
 		std::cout << "No method was chosen." << '\n' << "Exit." << std::endl;
 		return 1;
 	}
@@ -163,18 +170,43 @@ int main() {
 
 	std::ofstream plotfile(plotname);
 
+	if (option == 0) {
+		plotfile << "set term pdfcairo" << '\n'
+			<< "set output 'velocity-" << method_name << ".pdf'" << '\n'
+			<< "set grid" << '\n'
+			<< "set ylabel 'v [ms^{-1}]'" << '\n'
+			<< "set xlabel 't [s]'" << '\n'
+			<< "set auto xy" << '\n'
+			<< "set tit 'Analytic Velocity'" << '\n'
+			<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic'" << '\n'
+			<< "unset term" << '\n'
+			<< "rep" << '\n'
+			<< "pause -1" << '\n';
+
+		plotfile.close();
+	}
+
 	plotfile << "set term pdfcairo" << '\n'
 		<< "set output 'velocity-" << method_name << ".pdf'" << '\n'
 		<< "set grid" << '\n'
 		<< "set ylabel 'v [ms^{-1}]'" << '\n'
 		<< "set xlabel 't [s]'" << '\n'
 		<< "set auto xy" << '\n'
+		<< "set tit '" << method_name << " Method'" << '\n'
 		<< "p 'dat-velocity-" << method_name << ".dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << '\n'
+		<< "unset term" << '\n'
+		<< "rep" << '\n'
+		<< "pause -1" << '\n'
+		<< "set term pdfcairo" << '\n'
 		<< "set output 'error-velocity-" << method_name << ".pdf'" << '\n'
 		<< "set ylabel 'Error %'" << '\n'
 		<< "set logscale y" << '\n'
 		<< "set auto xy" << '\n'
-		<< "p 'dat-velocity-" << method_name << ".dat' u 1:4 w l tit 'Error'" << std::endl;
+		<< "set tit 'Error with " << method_name << " Method'" << '\n'
+		<< "p 'dat-velocity-" << method_name << ".dat' u 1:4 w l tit 'Error'" << '\n'
+		<< "unset term" << '\n'
+		<< "rep" << '\n'
+		<< "pause -1" << '\n';
 
 	plotfile.close();
 
