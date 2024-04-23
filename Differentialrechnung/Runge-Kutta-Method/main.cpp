@@ -5,18 +5,18 @@
 #include <string>
 
 const double kInitialt = 1.0;
-const double kInitialy = 1.0;
-const double kFinalt   = 5.0;
+const double kInitialy = 0.0;
+const double kFinalt   = 10.0;
 
-const double kStepSize         = 1e-1;
+const double kStepSize         = 1e-5;
 const double kDesiredPrecision = 20;
 
 double FirstDerivative(double t, double y) {
-	return t * t / y;
+	return sin(log(t));
 }
 
 double AnalyticSolution(double t) {
-	return std::sqrt(2 * (t * t * t / 3.0 + 1.0 / 6.0));
+	return 0.5 * (t * (sin(log(t)) - cos(log(t))) + 1);
 }
 
 double RungeKuttaMethod(double previous_t, double previous_y, double step_size, double(*derivative)(double, double)) {
@@ -68,13 +68,15 @@ int main() {
 	std::ofstream plotfile(plotname);
 
 	plotfile << "set term pdfcairo" << '\n'
-		<< "set output 'runge-kutta.pdf'" << '\n'
+		<< "set output 'sinlogt.pdf'" << '\n'
+		<< "set tit \"y' = sin(log(t))\"" << '\n'
 		<< "set grid" << '\n'
-		<< "set ylabel 'v [ms^{-1}]'" << '\n'
-		<< "set xlabel 't [s]'" << '\n'
+		<< "set ylabel 'y'" << '\n'
+		<< "set xlabel 't'" << '\n'
 		<< "set auto xy" << '\n'
 		<< "p 'dat-runge-kutta.dat' u 1:2 w l tit 'Analytic', '' u 1:3 w l tit 'Approx.'" << '\n'
-		<< "set output 'error-runge-kutta.pdf'" << '\n'
+		<< "set output 'error-sinlogt.pdf'" << '\n'
+		<< "set tit \"Error y' = sin(log(t))\"" << '\n'
 		<< "set ylabel 'Error %'" << '\n'
 		<< "set logscale y" << '\n'
 		<< "set auto xy" << '\n'
