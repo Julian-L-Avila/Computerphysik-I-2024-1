@@ -1,3 +1,9 @@
+/* Implementation of 4 different methods to solve the parachute problem
+ *
+ * Made By Julian L. Avila - 20212107030
+ * Computational Physics I
+ */
+
 #include <iomanip>
 #include <iostream>
 #include <cmath>
