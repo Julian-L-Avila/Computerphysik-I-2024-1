@@ -1,3 +1,10 @@
+/* Solution to harmonic differential equation for "Fisica Computacional I"
+ *
+ * Made by:
+ * Julian L. Avila - 202212107030
+ *
+ */
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
