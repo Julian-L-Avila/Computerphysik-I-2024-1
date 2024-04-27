@@ -1,6 +1,7 @@
 /* Solution to harmonic differential equation for "Fisica Computacional I"
  *
  * Made by:
+ * Julian L. Avila - 20212107030
  */
 
 #include <iostream>
