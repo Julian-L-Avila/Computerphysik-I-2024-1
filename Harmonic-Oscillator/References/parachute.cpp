@@ -1,9 +1,3 @@
-/* Implementation of 4 different methods to solve the parachute problem
- *
- * Made By Julian L. Avila - 20212107030
- * Computational Physics I
- */
-
 #include <iomanip>
 #include <iostream>
 #include <cmath>
@@ -222,6 +216,3 @@ int main() {
 
 	return 0;
 }
-
-/* Resolver el problema utilizando cuatro métodos numéricos distintos me permitió ejemplificar de manera óptima cómo el método elegido afecta la precisión de la solución. Este problema particular, que tiene una solución analítica fácil de encontrar, es un excelente ejemplo para observar cómo cada método mejora lo construido por el anterior. Aunque el método de Taylor presenta el mayor error de los cuatro, para este caso específico, se acerca lo suficiente según sea necesario. Claramente, la clave no radica únicamente en implementar el método que presenta menos error, sino también en el más eficiente en términos de tiempo de computación. Cuando la diferencia no es tan significativa en cuanto a los tiempos, pero sí en cuanto a la precisión, como ocurre con el método de Euler y el método de Heun, está claro que aplicar Heun es preferible.
- */
