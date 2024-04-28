@@ -1,5 +1,5 @@
 This file is a guide for following data files of experimental data:
 
 File must be .dat
-Name must be like this: "variable-characteristic.dat"
+Name must be like this: "experimental-characteristic.dat"
 File must be tab separated
