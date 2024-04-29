@@ -23,11 +23,11 @@ double natural_frequency        = sqrt(natural_frequency_square);
 const double kStepSize      = 1e-2;
 const int kDesiredPrecision = 20;
 
-double FirstVelocityDerivative(double time, double velocity, double position) {
+double FirstVelocityDerivative(double velocity, double position) {
 	return -natural_frequency_square * position;
 }
 
-double FirstPositionDerivative(double time, double position, double velocity) {
+double FirstPositionDerivative(double position, double velocity) {
 	return velocity;
 }
 
@@ -39,11 +39,11 @@ double AnalyticSolutionPosition(double t) {
 	return 0.0;
 }
 
-double EulerMethod(double previous_t, double previous_x, double previous_y, double (*Derivative)(double, double, double)) {
-	return previous_x + kStepSize * Derivative(previous_t, previous_x,  previous_y);
+double EulerMethod(double previous_x, double previous_y, double (*Derivative)(double, double)) {
+	return previous_x + kStepSize * Derivative(previous_x,  previous_y);
 }
 
-void EulerLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity, double (*Derivativex)(double, double, double), double (*Derivativey)(double, double, double)) {
+void EulerLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
 	double previous_x, previous_v;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
@@ -58,8 +58,8 @@ void EulerLoop(const std::string& mass, double initial_time, double final_time, 
 		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
 
 	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
-	double x = EulerMethod(t, previous_x, previous_v, Derivativex);
-	double v = EulerMethod(t, previous_v, previous_x, Derivativey);
+	double x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
+	double v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
 
 	datafile << t << '\t' << x << '\t' << v << '\n';
 	previous_x = x;
@@ -69,7 +69,7 @@ void EulerLoop(const std::string& mass, double initial_time, double final_time, 
 	datafile.close();
 }
 
-void HeunLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity, double (*Derivativex)(double, double, double), double (*Derivativey)(double, double, double)) {
+void HeunLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
 
 	double previous_x, previous_v;
 	previous_x = initial_position;
@@ -85,11 +85,11 @@ void HeunLoop(const std::string& mass, double initial_time, double final_time, d
 		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
 
 	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
-		double euler_x = EulerMethod(t, previous_x, previous_v, Derivativex);
-		double euler_y = EulerMethod(t, previous_v, previous_x, Derivativey);
+		double euler_x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
+		double euler_y = EulerMethod(previous_v, previous_x, FirstPositionDerivative);
 
-		double x = previous_x + 0.5 * kStepSize * (Derivativex(t, previous_x, previous_v) + Derivativex(t + kStepSize, euler_x, euler_y));
-		double v = previous_v + 0.5 * kStepSize * (Derivativey(t, previous_v, previous_x) + Derivativey(t, euler_y, euler_x));
+		double x = previous_x + 0.5 * kStepSize * (FirstPositionDerivative(previous_x, previous_v) + FirstPositionDerivative(euler_x, euler_y));
+		double v = previous_v + 0.5 * kStepSize * (FirstVelocityDerivative(previous_v, previous_x) + FirstVelocityDerivative(euler_y, euler_x));
 
 		datafile << t << '\t' << x << '\t' << v << '\n';
 		previous_x = x;
@@ -99,16 +99,40 @@ void HeunLoop(const std::string& mass, double initial_time, double final_time, d
 	datafile.close();
 }
 
+void RungeKuttaLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
 
-double RungeKuttaMethod(double previous_t, double previous_y, double step_size, double(*derivative)(double, double)) {
-	double k1, k2, k3, k4;
+	double previous_x, previous_v;
+	previous_x = initial_position;
+	previous_v = initial_velocity;
 
-	k1 = derivative(previous_t, previous_y);
-	k2 = derivative(previous_t + 0.5 * step_size, previous_y + 0.5 * step_size * k1);
-	k3 = derivative(previous_t + 0.5 * step_size, previous_y + 0.5 * step_size * k2);
-	k4 = derivative(previous_t + step_size, previous_y + step_size * k3);
+	std::string path_file_name = "./Approx-Data/rungekutta-" + mass + ".dat";
 
-	return previous_y + step_size * (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;
+	std::ofstream datafile(path_file_name);
+
+	datafile << "# RungeKutta Data" << '\n'
+		<< "#Time (s) \t Position (m) \t Velocity (ms^-1)" << '\n'
+		<< std::setprecision(kDesiredPrecision) << std::fixed
+		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
+
+	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
+		long double k1 = FirstPositionDerivative(previous_x, previous_v);
+		long double m1 = FirstVelocityDerivative(previous_v, previous_x);
+		long double k2 = FirstPositionDerivative(previous_x + 0.5 * k1 * kStepSize, previous_v + 0.5 * m1 * kStepSize);
+		long double m2 = FirstVelocityDerivative(previous_v + 0.5 * m1 * kStepSize, previous_x + 0.5 * k1 * kStepSize);
+		long double k3 = FirstPositionDerivative(previous_x + 0.5 * k2 * kStepSize, previous_v + 0.5 * m2 * kStepSize);
+		long double m3 = FirstVelocityDerivative(previous_v + 0.5 * m2 * kStepSize, previous_x + 0.5 * k2 * kStepSize);
+		long double k4 = FirstPositionDerivative(previous_x + k3 * kStepSize, previous_v + m3 * kStepSize);
+		long double m4 = FirstVelocityDerivative(previous_v + m3, previous_x + k4);
+
+		long double x = previous_x + kStepSize * (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
+		long double v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
+
+		datafile << t << '\t' << x << '\t' << v << '\n';
+		previous_x = x;
+		previous_v = v;
+	}
+
+	datafile.close();
 }
 
 double Error(double real_value, double value) {
@@ -116,7 +140,8 @@ double Error(double real_value, double value) {
 }
 
 int main() {
-	EulerLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, FirstPositionDerivative, FirstVelocityDerivative);
-	HeunLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, FirstPositionDerivative, FirstVelocityDerivative);
+	EulerLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
+	HeunLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
+	RungeKuttaLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
 	return 0;
 }
