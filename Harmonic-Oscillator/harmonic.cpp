@@ -11,12 +11,12 @@
 #include <iomanip>
 
 const double kInitialTime     = 0.0;
-const double kFinalTime       = 10.0;
+const double kFinalTime       = 20.0;
 const double kInitialPosition = 5.0;
 const double kInitialVelocity = 0.0;
 
-double spring_constant          = 5.0;
-double mass                     = 10.0;
+double spring_constant          = 0.1;
+double mass                     = 0.1;
 double natural_frequency_square = spring_constant / mass;
 double natural_frequency        = sqrt(natural_frequency_square);
 
@@ -32,36 +32,42 @@ double FirstPositionDerivative(double position, double velocity) {
 }
 
 double AnalyticSolutionVelocity(double t) {
-	return 0.0;
+	return -natural_frequency * kInitialPosition * sin(natural_frequency * t);
 }
 
 double AnalyticSolutionPosition(double t) {
-	return 0.0;
+	return kInitialPosition * cos(natural_frequency * t);
+}
+
+double Energy(double mass, double spring_constant, double x, double v) {
+	return 0.5 * mass * v * v + 0.5 * spring_constant * x * x;
 }
 
 double EulerMethod(double previous_x, double previous_y, double (*Derivative)(double, double)) {
 	return previous_x + kStepSize * Derivative(previous_x,  previous_y);
 }
 
-void EulerLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
-	double previous_x, previous_v;
+void EulerLoop(const std::string& mass_string, double initial_time, double final_time, double initial_position, double initial_velocity) {
+	double previous_x, previous_v, energy;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
+	energy = Energy(mass, spring_constant, previous_x, previous_v);
 
-	std::string path_file_name = "./Approx-Data/euler-" + mass + ".dat";
+	std::string path_file_name = "./Approx-Data/euler-" + mass_string + ".dat";
 
 	std::ofstream datafile(path_file_name);
 
 	datafile << "# Euler Data" << '\n'
-		<< "#Time (s) \t Position (m) \t Velocity (ms^-1)" << '\n'
+		<< "#Time (s) \t Position (m) \t Velocity (ms^-1) \t Energy (J)" << '\n'
 		<< std::setprecision(kDesiredPrecision) << std::fixed
-		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
+		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\t' << energy << '\n';
 
 	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
 	double x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
 	double v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
+	energy = Energy(mass, spring_constant, x, v);
 
-	datafile << t << '\t' << x << '\t' << v << '\n';
+	datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
 	previous_x = x;
 	previous_v = v;
 	}
@@ -69,20 +75,20 @@ void EulerLoop(const std::string& mass, double initial_time, double final_time, 
 	datafile.close();
 }
 
-void HeunLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
-
-	double previous_x, previous_v;
+void HeunLoop(const std::string& mass_string, double initial_time, double final_time, double initial_position, double initial_velocity) {
+	double previous_x, previous_v, energy;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
+	energy = Energy(mass, spring_constant, previous_x, previous_v);
 
-	std::string path_file_name = "./Approx-Data/heun-" + mass + ".dat";
+	std::string path_file_name = "./Approx-Data/heun-" + mass_string + ".dat";
 
 	std::ofstream datafile(path_file_name);
 
 	datafile << "# Heun Data" << '\n'
-		<< "#Time (s) \t Position (m) \t Velocity (ms^-1)" << '\n'
+		<< "#Time (s) \t Position (m) \t Velocity (ms^-1) \t Energy (J)" << '\n'
 		<< std::setprecision(kDesiredPrecision) << std::fixed
-		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
+		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\t' << energy<< '\n';
 
 	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
 		double euler_x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
@@ -90,8 +96,9 @@ void HeunLoop(const std::string& mass, double initial_time, double final_time, d
 
 		double x = previous_x + 0.5 * kStepSize * (FirstPositionDerivative(previous_x, previous_v) + FirstPositionDerivative(euler_x, euler_y));
 		double v = previous_v + 0.5 * kStepSize * (FirstVelocityDerivative(previous_v, previous_x) + FirstVelocityDerivative(euler_y, euler_x));
+		energy = Energy(mass, spring_constant, previous_x, previous_v);
 
-		datafile << t << '\t' << x << '\t' << v << '\n';
+		datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
 		previous_x = x;
 		previous_v = v;
 	}
@@ -99,20 +106,20 @@ void HeunLoop(const std::string& mass, double initial_time, double final_time, d
 	datafile.close();
 }
 
-void RungeKuttaLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
-
-	double previous_x, previous_v;
+void RungeKuttaLoop(const std::string& mass_string, double initial_time, double final_time, double initial_position, double initial_velocity) {
+	double previous_x, previous_v, energy;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
+	energy = Energy(mass, spring_constant, previous_x, previous_v);
 
-	std::string path_file_name = "./Approx-Data/rungekutta-" + mass + ".dat";
+	std::string path_file_name = "./Approx-Data/rungekutta-" + mass_string + ".dat";
 
 	std::ofstream datafile(path_file_name);
 
 	datafile << "# RungeKutta Data" << '\n'
-		<< "#Time (s) \t Position (m) \t Velocity (ms^-1)" << '\n'
+		<< "#Time (s) \t Position (m) \t Velocity (ms^-1) \t Energy (J)" << '\n'
 		<< std::setprecision(kDesiredPrecision) << std::fixed
-		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
+		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\t' << energy << '\n';
 
 	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
 		long double k1 = FirstPositionDerivative(previous_x, previous_v);
@@ -126,8 +133,9 @@ void RungeKuttaLoop(const std::string& mass, double initial_time, double final_t
 
 		long double x = previous_x + kStepSize * (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
 		long double v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
+		energy = Energy(mass, spring_constant, x, v);
 
-		datafile << t << '\t' << x << '\t' << v << '\n';
+		datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
 		previous_x = x;
 		previous_v = v;
 	}
