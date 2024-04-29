@@ -10,13 +10,25 @@
 #include <string>
 #include <filesystem>
 
-const double kInitialTime      = 0.0;
+const double kInitialTime     = 0.0;
+const double kFinalTime       = 10.0;
+const double kInitialPosition = 5.0;
+const double kInitialVelocity = 0.0;
+
+double spring_constant          = 5.0;
+double mass                     = 10.0;
+double natural_frequency_square = spring_constant / mass;
+double natural_frequency        = sqrt(natural_frequency_square);
 
 const double kStepSize      = 1e-2;
 const int kDesiredPrecision = 20;
 
-double FirstDerivative(double t, double v) {
-	return 0.0;
+double FirstVelocityDerivative(double velocity, double position) {
+	return -natural_frequency_square * position;
+}
+
+double FirstPositionDerivative(double position, double velocity) {
+	return velocity;
 }
 
 double AnalyticSolutionVelocity(double t) {
@@ -27,34 +39,109 @@ double AnalyticSolutionPosition(double t) {
 	return 0.0;
 }
 
-double EulerMethod(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
-	return previous_y + step_size * derivative(previous_t, previous_y);
+double EulerMethod(double previous_x, double previous_y, double (*Derivative)(double, double)) {
+	return previous_x + kStepSize * Derivative(previous_x,  previous_y);
 }
 
-double HeunMethod(double previous_t, double previous_y, double step_size, double (*derivative)(double, double)) {
-	double euler_y = EulerMethod(previous_t, previous_y, step_size, derivative);
+void EulerLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
+	double previous_x, previous_v;
+	previous_x = initial_position;
+	previous_v = initial_velocity;
 
-	return previous_y + 0.5 * step_size * (derivative(previous_t, previous_y) + derivative(previous_t + step_size, euler_y));
+	std::string path_file_name = "./Approx-Data/euler-" + mass + ".dat";
+
+	std::ofstream datafile(path_file_name);
+
+	datafile << "# Euler Data" << '\n'
+		<< "#Time (s) \t Position (m) \t Velocity (ms^-1)" << '\n'
+		<< std::setprecision(kDesiredPrecision) << std::fixed
+		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
+
+	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
+	double x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
+	double v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
+
+	datafile << t << '\t' << x << '\t' << v << '\n';
+	previous_x = x;
+	previous_v = v;
+	}
+
+	datafile.close();
 }
 
-double RungeKuttaMethod(double previous_t, double previous_y, double step_size, double(*derivative)(double, double)) {
-	double k1, k2, k3, k4;
+void HeunLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
 
-	k1 = derivative(previous_t, previous_y);
-	k2 = derivative(previous_t + 0.5 * step_size, previous_y + 0.5 * step_size * k1);
-	k3 = derivative(previous_t + 0.5 * step_size, previous_y + 0.5 * step_size * k2);
-	k4 = derivative(previous_t + step_size, previous_y + step_size * k3);
+	double previous_x, previous_v;
+	previous_x = initial_position;
+	previous_v = initial_velocity;
 
-	return previous_y + step_size * (k1 + 2 * k2 + 2 * k3 + k4) / 6.0;
+	std::string path_file_name = "./Approx-Data/heun-" + mass + ".dat";
+
+	std::ofstream datafile(path_file_name);
+
+	datafile << "# Heun Data" << '\n'
+		<< "#Time (s) \t Position (m) \t Velocity (ms^-1)" << '\n'
+		<< std::setprecision(kDesiredPrecision) << std::fixed
+		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
+
+	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
+		double euler_x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
+		double euler_y = EulerMethod(previous_v, previous_x, FirstPositionDerivative);
+
+		double x = previous_x + 0.5 * kStepSize * (FirstPositionDerivative(previous_x, previous_v) + FirstPositionDerivative(euler_x, euler_y));
+		double v = previous_v + 0.5 * kStepSize * (FirstVelocityDerivative(previous_v, previous_x) + FirstVelocityDerivative(euler_y, euler_x));
+
+		datafile << t << '\t' << x << '\t' << v << '\n';
+		previous_x = x;
+		previous_v = v;
+	}
+
+	datafile.close();
+}
+
+void RungeKuttaLoop(const std::string& mass, double initial_time, double final_time, double initial_position, double initial_velocity) {
+
+	double previous_x, previous_v;
+	previous_x = initial_position;
+	previous_v = initial_velocity;
+
+	std::string path_file_name = "./Approx-Data/rungekutta-" + mass + ".dat";
+
+	std::ofstream datafile(path_file_name);
+
+	datafile << "# RungeKutta Data" << '\n'
+		<< "#Time (s) \t Position (m) \t Velocity (ms^-1)" << '\n'
+		<< std::setprecision(kDesiredPrecision) << std::fixed
+		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\n';
+
+	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
+		long double k1 = FirstPositionDerivative(previous_x, previous_v);
+		long double m1 = FirstVelocityDerivative(previous_v, previous_x);
+		long double k2 = FirstPositionDerivative(previous_x + 0.5 * k1 * kStepSize, previous_v + 0.5 * m1 * kStepSize);
+		long double m2 = FirstVelocityDerivative(previous_v + 0.5 * m1 * kStepSize, previous_x + 0.5 * k1 * kStepSize);
+		long double k3 = FirstPositionDerivative(previous_x + 0.5 * k2 * kStepSize, previous_v + 0.5 * m2 * kStepSize);
+		long double m3 = FirstVelocityDerivative(previous_v + 0.5 * m2 * kStepSize, previous_x + 0.5 * k2 * kStepSize);
+		long double k4 = FirstPositionDerivative(previous_x + k3 * kStepSize, previous_v + m3 * kStepSize);
+		long double m4 = FirstVelocityDerivative(previous_v + m3, previous_x + k4);
+
+		long double x = previous_x + kStepSize * (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
+		long double v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
+
+		datafile << t << '\t' << x << '\t' << v << '\n';
+		previous_x = x;
+		previous_v = v;
+	}
+
+	datafile.close();
 }
 
 double Error(double real_value, double value) {
 	return std::abs((real_value - value) / real_value) * 100;
 }
 
-void IterationLoop(const std::string& method_name, double initial_time, double initial_velocity, double initial_position, double step_size, double (*method)(double, double, double, double (*)(double, double))) {
-}
-
 int main() {
+	EulerLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
+	HeunLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
+	RungeKuttaLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
 	return 0;
 }
