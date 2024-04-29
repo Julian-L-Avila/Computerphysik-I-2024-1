@@ -148,8 +148,5 @@ double Error(double real_value, double value) {
 }
 
 int main() {
-	EulerLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
-	HeunLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
-	RungeKuttaLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
 	return 0;
 }
