@@ -115,5 +115,6 @@ double Error(long double real_value, long double value) {
 }
 
 int main() {
+	InitialLoop("01", "euler", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, EulerLoop); // Example How to call function
 	return 0;
 }
