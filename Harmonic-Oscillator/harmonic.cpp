@@ -49,7 +49,7 @@ long double EulerMethod(long double previous_x, long double previous_y, long dou
 	return previous_x + kStepSize * Derivative(previous_x,  previous_y);
 }
 
-void InitialLoop(const std::string& mass_string, const std::string& method_name, double initial_time, double final_time, double initial_position, double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, std::ofstream&, long double&, long double&)) {
+void InitialLoop(const std::string& mass_string, const std::string& method_name, double initial_time, double final_time, double initial_position, double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&)) {
 	long double previous_x, previous_v, energy, x, v;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
@@ -65,7 +65,7 @@ void InitialLoop(const std::string& mass_string, const std::string& method_name,
 		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\t' << energy << '\n';
 
 	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
-		MethodLoop(t, previous_x, previous_v, energy, datafile, x, v);
+		MethodLoop(t, previous_x, previous_v, energy, x, v);
 
 		datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
 		previous_x = x;
@@ -75,13 +75,13 @@ void InitialLoop(const std::string& mass_string, const std::string& method_name,
 	datafile.close();
 }
 
-void EulerLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, std::ofstream& datafile, long double& x, long double& v) {
+void EulerLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v) {
 	x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
 	v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
 	energy = Energy(mass, previous_x, previous_v);
 }
 
-void HeunLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, std::ofstream& datafile, long double& x, long double& v) {
+void HeunLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v) {
 	long double euler_x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
 	long double euler_v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
 
@@ -90,7 +90,7 @@ void HeunLoop(double& t, long double& previous_x, long double& previous_v, long 
 	energy = Energy(mass, previous_x, previous_v);
 }
 
-void RungeKuttaLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, std::ofstream& datafile, long double& x, long double& v) {
+void RungeKuttaLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v) {
 	long double k1 = FirstPositionDerivative(previous_x, previous_v);
 	long double m1 = FirstVelocityDerivative(previous_v, previous_x);
 	long double k2 = FirstPositionDerivative(previous_x + 0.5 * k1 * kStepSize, previous_v + 0.5 * m1 * kStepSize);
@@ -103,6 +103,11 @@ void RungeKuttaLoop(double& t, long double& previous_x, long double& previous_v,
 	x = previous_x + kStepSize * (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
 	v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
 	energy = Energy(mass, x, v);
+}
+
+void AnalyticLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v) {
+	x = AnalyticSolutionPosition(t);
+	v = AnalyticSolutionVelocity(t);
 }
 
 double Error(long double real_value, long double value) {
