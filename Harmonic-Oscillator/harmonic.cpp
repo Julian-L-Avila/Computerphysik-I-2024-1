@@ -14,10 +14,10 @@ const double kInitialTime     = 0.0;
 const double kFinalTime       = 20.0;
 const double kInitialPosition = 5.0;
 const double kInitialVelocity = 0.0;
+const double kSpringConstant  = 0.1;
 
-double spring_constant          = 0.1;
 double mass                     = 0.1;
-double natural_frequency_square = spring_constant / mass;
+double natural_frequency_square = kSpringConstant / mass;
 double natural_frequency        = sqrt(natural_frequency_square);
 
 const double kStepSize      = 1e-2;
@@ -39,78 +39,64 @@ double AnalyticSolutionPosition(double t) {
 	return kInitialPosition * cos(natural_frequency * t);
 }
 
-double Energy(double mass, double spring_constant, double x, double v) {
-	return 0.5 * mass * v * v + 0.5 * spring_constant * x * x;
+double Energy(double mass, double x, double v) {
+	return 0.5 * mass * v * v + 0.5 * kSpringConstant * x * x;
 }
 
 double EulerMethod(double previous_x, double previous_y, double (*Derivative)(double, double)) {
 	return previous_x + kStepSize * Derivative(previous_x,  previous_y);
 }
 
-void EulerLoop(const std::string& mass_string, double initial_time, double final_time, double initial_position, double initial_velocity) {
+void InitialLoop(const std::string& mass_string, const std::string& method_name, double initial_time, double final_time, double initial_position, double initial_velocity, void(*MethodLoop) (double, double, double, double, std::ofstream&)) {
 	double previous_x, previous_v, energy;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
-	energy = Energy(mass, spring_constant, previous_x, previous_v);
+	energy = Energy(mass, previous_x, previous_v);
 
-	std::string path_file_name = "./Approx-Data/euler-" + mass_string + ".dat";
+	std::string path_file_name = "./Approx-Data/" + method_name + mass_string + ".dat";
 
 	std::ofstream datafile(path_file_name);
 
-	datafile << "# Euler Data" << '\n'
+	datafile << "# " + method_name + "Data" << '\n'
 		<< "#Time (s) \t Position (m) \t Velocity (ms^-1) \t Energy (J)" << '\n'
 		<< std::setprecision(kDesiredPrecision) << std::fixed
 		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\t' << energy << '\n';
 
 	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
-	double x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
-	double v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
-	energy = Energy(mass, spring_constant, x, v);
-
-	datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
-	previous_x = x;
-	previous_v = v;
+		MethodLoop(t, previous_x, previous_v, energy, datafile);
 	}
 
 	datafile.close();
 }
 
-void HeunLoop(const std::string& mass_string, double initial_time, double final_time, double initial_position, double initial_velocity) {
-	double previous_x, previous_v, energy;
-	previous_x = initial_position;
-	previous_v = initial_velocity;
-	energy = Energy(mass, spring_constant, previous_x, previous_v);
+void EulerLoop(double& t, double& previous_x, double& previous_v, double& energy, std::ofstream& datafile) {
+	double x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
+	double v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
+	energy = Energy(mass, previous_x, previous_v);
 
-	std::string path_file_name = "./Approx-Data/heun-" + mass_string + ".dat";
+	datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
+	previous_x = x;
+	previous_v = v;
+}
 
-	std::ofstream datafile(path_file_name);
+void HeunLoop(double& t, double& previous_x, double& previous_v, double& energy, std::ofstream& datafile) {
+	double euler_x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
+	double euler_v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative); // Possible error firstvelocity or firstposistion
 
-	datafile << "# Heun Data" << '\n'
-		<< "#Time (s) \t Position (m) \t Velocity (ms^-1) \t Energy (J)" << '\n'
-		<< std::setprecision(kDesiredPrecision) << std::fixed
-		<< initial_time << '\t' << initial_position << '\t' << initial_velocity << '\t' << energy<< '\n';
+	double x = previous_x + 0.5 * kStepSize * (FirstPositionDerivative(previous_x, previous_v) + FirstPositionDerivative(euler_x, euler_v));
+	double v = previous_v + 0.5 * kStepSize * (FirstVelocityDerivative(previous_v, previous_x) + FirstVelocityDerivative(euler_v, euler_x));
+	energy = Energy(mass, previous_x, previous_v);
 
-	for (double t = initial_time + kStepSize; t <= final_time; t += kStepSize) {
-		double euler_x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
-		double euler_y = EulerMethod(previous_v, previous_x, FirstPositionDerivative);
-
-		double x = previous_x + 0.5 * kStepSize * (FirstPositionDerivative(previous_x, previous_v) + FirstPositionDerivative(euler_x, euler_y));
-		double v = previous_v + 0.5 * kStepSize * (FirstVelocityDerivative(previous_v, previous_x) + FirstVelocityDerivative(euler_y, euler_x));
-		energy = Energy(mass, spring_constant, previous_x, previous_v);
-
-		datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
-		previous_x = x;
-		previous_v = v;
-	}
-
-	datafile.close();
+	datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
+	previous_x = x;
+	previous_v = v;
 }
 
 void RungeKuttaLoop(const std::string& mass_string, double initial_time, double final_time, double initial_position, double initial_velocity) {
 	double previous_x, previous_v, energy;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
-	energy = Energy(mass, spring_constant, previous_x, previous_v);
+	energy = Energy(mass, previous_x, previous_v);
 
 	std::string path_file_name = "./Approx-Data/rungekutta-" + mass_string + ".dat";
 
@@ -133,7 +119,7 @@ void RungeKuttaLoop(const std::string& mass_string, double initial_time, double 
 
 		long double x = previous_x + kStepSize * (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
 		long double v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
-		energy = Energy(mass, spring_constant, x, v);
+		energy = Energy(mass, x, v);
 
 		datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
 		previous_x = x;
@@ -148,8 +134,6 @@ double Error(double real_value, double value) {
 }
 
 int main() {
-	EulerLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
-	HeunLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
-	RungeKuttaLoop("200g", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity);
+	InitialLoop("01", "euler", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, EulerLoop);
 	return 0;
 }
