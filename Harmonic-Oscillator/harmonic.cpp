@@ -16,9 +16,11 @@ const double kInitialPosition = 5.0;
 const double kInitialVelocity = 0.0;
 const double kSpringConstant  = 0.1;
 
+// Must go after user choice
 double mass                     = 0.1;
 double natural_frequency_square = kSpringConstant / mass;
 double natural_frequency        = sqrt(natural_frequency_square);
+//
 
 const double kStepSize      = 1e-2;
 const int kDesiredPrecision = 20;
@@ -79,7 +81,7 @@ void EulerLoop(double& t, long double& previous_x, long double& previous_v, long
 	energy = Energy(mass, previous_x, previous_v);
 }
 
-void HeunLoop(double& t, double& previous_x, double& previous_v, double& energy, std::ofstream& datafile, double& x, double& v) {
+void HeunLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, std::ofstream& datafile, long double& x, long double& v) {
 	long double euler_x = EulerMethod(previous_x, previous_v, FirstPositionDerivative);
 	long double euler_v = EulerMethod(previous_v, previous_x, FirstVelocityDerivative);
 
@@ -88,7 +90,7 @@ void HeunLoop(double& t, double& previous_x, double& previous_v, double& energy,
 	energy = Energy(mass, previous_x, previous_v);
 }
 
-void RungeKuttaLoop(double& t, double& previous_x, double& previous_v, double& energy, std::ofstream& datafile, double& x, double& v) {
+void RungeKuttaLoop(double& t, long double& previous_x, long double& previous_v, long double& energy, std::ofstream& datafile, long double& x, long double& v) {
 	long double k1 = FirstPositionDerivative(previous_x, previous_v);
 	long double m1 = FirstVelocityDerivative(previous_v, previous_x);
 	long double k2 = FirstPositionDerivative(previous_x + 0.5 * k1 * kStepSize, previous_v + 0.5 * m1 * kStepSize);
@@ -101,10 +103,6 @@ void RungeKuttaLoop(double& t, double& previous_x, double& previous_v, double& e
 	x = previous_x + kStepSize * (k1 + 2.0 * (k2 + k3) + k4) / 6.0;
 	v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
 	energy = Energy(mass, x, v);
-
-	datafile << t << '\t' << x << '\t' << v << '\t' << energy << '\n';
-	previous_x = x;
-	previous_v = v;
 }
 
 double Error(long double real_value, long double value) {
@@ -112,6 +110,5 @@ double Error(long double real_value, long double value) {
 }
 
 int main() {
-	InitialLoop("01", "euler", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, EulerLoop);
 	return 0;
 }
