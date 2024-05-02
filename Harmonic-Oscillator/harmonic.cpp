@@ -7,6 +7,7 @@
  * Juan S. Acuña    - 20212107034
  */
 
+#include <cctype>
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -39,19 +40,26 @@ void DataLoop(const std::string& mass_as_string, const std::string& method_name,
 									double initial_time, double final_time, double initial_position,
 									double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&));
 std::string MassChoice();
-std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &));
+void MethodData(std::string& mass_as_string);
+int EndSim();
 
 
 int main() {
+	int stop = 0;
+	system("clear");
+
+	std::cout << ":::::::::::::::::::::::::::::::WELCOME TO A MASS-SPRING SIMULATION:::::::::::::::::::::::::::::::" << '\n';
+
+	while (stop == 0) {
 	std::string mass_as_string = MassChoice();
 	natural_frequency_square = kSpringConstant / mass;
 	natural_frequency        = sqrt(natural_frequency_square);
 
-	void (*method)(double &, long double &, long double &, long double &, long double &, long double &) = AnalyticImplementation;
-	DataLoop(mass_as_string, "analytic", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, method);
+	DataLoop(mass_as_string, "analytic", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, AnalyticImplementation);
+	MethodData(mass_as_string);
 
-	std::string method_name = MethodChoice(method);
-	DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, method);
+	stop = EndSim();
+	}
 
 	return 0;
 }
@@ -184,8 +192,9 @@ std::string MassChoice() {
 	}
 }
 
-std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &)) {
+void MethodData(std::string& mass_as_string) {
 	int method_choice;
+	std::string method_name;
 
 	std::cout << "Select numerical method to compare with experimental and analytical data:" << '\n'
 		<< '\t' << "1. Euler" << '\n'
@@ -196,20 +205,36 @@ std::string MethodChoice(void(*method)(double &, long double &, long double &, l
 
 	switch (method_choice) {
 		case 1:
-			method = EulerImplementation;
-			return "euler";
+			method_name = "euler";
+			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, EulerImplementation);
 			break;
 		case 2:
-			method = HeunImplementation;
-			return "heun";
+			method_name = "heun";
+			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, HeunImplementation);
 			break;
 		case 3:
-			method = RungeKuttaImplementation;
-			return "runge-kutta";
+			method_name = "runge-kutta";
+			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, RungeKuttaImplementation);
 			break;
 		default:
 			std::cout << "Invalid input." << '\n';
-			return MethodChoice(method);
+			return MethodData(mass_as_string);
 			break;
+	}
+}
+
+int EndSim() {
+	char end_sim;
+	std::cout << "Would you like to end the script?" << '\n'
+		<< "Press Yes (y) or No (n): ";
+	std::cin >> end_sim;
+
+	end_sim = std::tolower(end_sim);
+	if (end_sim == 'y') {
+		std::cout << "Script has ended" << std::endl;
+		return 1;
+	}
+	else {
+		return 0;
 	}
 }
