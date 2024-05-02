@@ -153,7 +153,7 @@ void DataLoop(const std::string& mass_as_string, const std::string& method_name,
 }
 
 std::string MassChoice() {
-	int mass_option;
+	char mass_option;
 
 	std::cout << "Select the mass value of the object to obtain the experimental, analytical and numerical data of:" << '\n'
 		<< '\t' << "1. 100 g" << '\n'
@@ -165,23 +165,23 @@ std::string MassChoice() {
 	std::cin >> mass_option;
 
 	switch (mass_option) {
-		case 1:
+		case '1':
 			mass = 0.1;
 			return "100";
 			break;
-		case 2:
+		case '2':
 			mass = 0.2;
 			return "200";
 			break;
-		case 3:
+		case '3':
 			mass = 0.25;
 			return "250";
 			break;
-		case 4:
+		case '4':
 			mass = 0.27;
 			return "270";
 			break;
-		case 5:
+		case '5':
 			mass = 0.28;
 			return "280";
 			break;
@@ -193,7 +193,7 @@ std::string MassChoice() {
 }
 
 void MethodData(std::string& mass_as_string) {
-	int method_choice;
+	char method_choice;
 	std::string method_name;
 
 	std::cout << "Select numerical method to compare with experimental and analytical data:" << '\n'
@@ -204,15 +204,15 @@ void MethodData(std::string& mass_as_string) {
 	std::cin >> method_choice;
 
 	switch (method_choice) {
-		case 1:
+		case '1':
 			method_name = "euler";
 			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, EulerImplementation);
 			break;
-		case 2:
+		case '2':
 			method_name = "heun";
 			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, HeunImplementation);
 			break;
-		case 3:
+		case '3':
 			method_name = "runge-kutta";
 			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, RungeKuttaImplementation);
 			break;
