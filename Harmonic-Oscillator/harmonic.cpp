@@ -44,10 +44,6 @@ int main() {
 	mass = 0.1;
 	natural_frequency_square = kSpringConstant / mass;
 	natural_frequency        = sqrt(natural_frequency_square);
-
-	DataLoop("01", "euler", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, EulerImplementation);
-	DataLoop("01", "heun", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, HeunImplementation);
-	DataLoop("01", "runge-kutta", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, RungeKuttaImplementation);
 	return 0;
 }
 
