@@ -7,4 +7,3 @@ File must be tab separated
 First Line comment with method name
 Second line comment with:
 Time (s)	Position (m)	Velocity (ms^-1)
-
