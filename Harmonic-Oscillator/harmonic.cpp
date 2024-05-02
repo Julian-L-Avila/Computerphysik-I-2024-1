@@ -38,8 +38,8 @@ long double Error(long double real_value, long double value);
 void DataLoop(const std::string& mass_as_string, const std::string& method_name,
 									double initial_time, double final_time, double initial_position,
 									double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&));
-std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &));
 std::string MassChoice();
+std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &));
 
 
 int main() {
@@ -144,36 +144,6 @@ void DataLoop(const std::string& mass_as_string, const std::string& method_name,
 	datafile.close();
 }
 
-std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &)) {
-	int method_choice;
-
-	std::cout << "Select numerical method to compare with experimental and analytical data:" << '\n'
-		<< '\t' << "1. Euler" << '\n'
-		<< '\t' << "2. Heun" << '\n'
-		<< '\t' << "3. Runge-Kutta (Order 4)" << '\n';
-
-	std::cin >> method_choice;
-
-	switch (method_choice) {
-		case 1:
-			method = EulerImplementation;
-			return "euler";
-			break;
-		case 2:
-			method = HeunImplementation;
-			return "heun";
-			break;
-		case 3:
-			method = RungeKuttaImplementation;
-			return "runge-kutta";
-			break;
-		default:
-			std::cout << "Invalid input." << '\n';
-			return MethodChoice(method);
-			break;
-	}
-}
-
 std::string MassChoice() {
 	int mass_option;
 
@@ -210,6 +180,36 @@ std::string MassChoice() {
 		default:
 			std::cout << "Invalid input." << '\n';
 			return MassChoice();
+			break;
+	}
+}
+
+std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &)) {
+	int method_choice;
+
+	std::cout << "Select numerical method to compare with experimental and analytical data:" << '\n'
+		<< '\t' << "1. Euler" << '\n'
+		<< '\t' << "2. Heun" << '\n'
+		<< '\t' << "3. Runge-Kutta (Order 4)" << '\n';
+
+	std::cin >> method_choice;
+
+	switch (method_choice) {
+		case 1:
+			method = EulerImplementation;
+			return "euler";
+			break;
+		case 2:
+			method = HeunImplementation;
+			return "heun";
+			break;
+		case 3:
+			method = RungeKuttaImplementation;
+			return "runge-kutta";
+			break;
+		default:
+			std::cout << "Invalid input." << '\n';
+			return MethodChoice(method);
 			break;
 	}
 }
