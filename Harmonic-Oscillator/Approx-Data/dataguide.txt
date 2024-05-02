@@ -7,8 +7,3 @@ File must be tab separated
 First Line comment with method name
 Second line comment with:
 Time (s)	Position (m)	Velocity (ms^-1)
-his file is a guide for following data files of numerical solutions:
-
-File must be .dat
-Name must be like this: "variable-method-characteristic.dat"
-File must be tab separated
