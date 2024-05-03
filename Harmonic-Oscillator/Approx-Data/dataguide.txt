@@ -1,7 +1,7 @@
 This file is a guide for following data files of numerical solutions:
 
 File must be .dat
-Name must be like this: "method-characteristic.dat"
+Name must be: "method-characteristic.dat"
 File must be tab separated
 
 First Line comment with method name

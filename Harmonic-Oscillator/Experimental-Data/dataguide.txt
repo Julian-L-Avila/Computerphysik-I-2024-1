@@ -1,7 +1,7 @@
 This file is a guide for following data files of experimental data:
 
 File must be .dat
-Name must be like this: "experimental-characteristic.dat"
+Name must be: "experimental-characteristic.dat"
 File must be tab separated
 
 First Line comment with method name
