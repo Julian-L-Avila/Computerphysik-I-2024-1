@@ -38,12 +38,21 @@ long double Error(long double real_value, long double value);
 void DataLoop(const std::string& mass_as_string, const std::string& method_name,
 									double initial_time, double final_time, double initial_position,
 									double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&));
+std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &));
+std::string MassChoice();
 
 
 int main() {
-	mass = 0.1;
+	std::string mass_as_string = MassChoice();
 	natural_frequency_square = kSpringConstant / mass;
 	natural_frequency        = sqrt(natural_frequency_square);
+
+	void (*method)(double &, long double &, long double &, long double &, long double &, long double &) = AnalyticImplementation;
+	DataLoop(mass_as_string, "analytic", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, method);
+
+	std::string method_name = MethodChoice(method);
+	DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, method);
+
 	return 0;
 }
 
@@ -135,3 +144,72 @@ void DataLoop(const std::string& mass_as_string, const std::string& method_name,
 	datafile.close();
 }
 
+std::string MethodChoice(void(*method)(double &, long double &, long double &, long double &, long double &, long double &)) {
+	int method_choice;
+
+	std::cout << "Select numerical method to compare with experimental and analytical data:" << '\n'
+		<< '\t' << "1. Euler" << '\n'
+		<< '\t' << "2. Heun" << '\n'
+		<< '\t' << "3. Runge-Kutta (Order 4)" << '\n';
+
+	std::cin >> method_choice;
+
+	switch (method_choice) {
+		case 1:
+			method = EulerImplementation;
+			return "euler";
+			break;
+		case 2:
+			method = HeunImplementation;
+			return "heun";
+			break;
+		case 3:
+			method = RungeKuttaImplementation;
+			return "runge-kutta";
+			break;
+		default:
+			std::cout << "Invalid input." << '\n';
+			return MethodChoice(method);
+			break;
+	}
+}
+
+std::string MassChoice() {
+	int mass_option;
+
+	std::cout << "Select the mass value of the object to obtain the experimental, analytical and numerical data of:" << '\n'
+		<< '\t' << "1. 100 g" << '\n'
+		<< '\t' << "2. 200 g" << '\n'
+		<< '\t' << "3. 250 g" << '\n'
+		<< '\t' << "4. 270 g" << '\n'
+		<< '\t' << "5. 280 g" << '\n';
+
+	std::cin >> mass_option;
+
+	switch (mass_option) {
+		case 1:
+			mass = 0.1;
+			return "100";
+			break;
+		case 2:
+			mass = 0.2;
+			return "200";
+			break;
+		case 3:
+			mass = 0.25;
+			return "250";
+			break;
+		case 4:
+			mass = 0.27;
+			return "270";
+			break;
+		case 5:
+			mass = 0.28;
+			return "280";
+			break;
+		default:
+			std::cout << "Invalid input." << '\n';
+			return MassChoice();
+			break;
+	}
+}
