@@ -1,5 +1,5 @@
-Time (s)	Position (m)	Velocity (ms^-1)	kinetic_energy (J)
-0.010	-1.187E-2		
+# Time (s)	Position (m)	Velocity (ms^-1)	kinetic_energy (J)
+0.010	-1.187E-2	0.0	0.0
 0.020	-9.094E-3	0.370	1.740E-2
 0.030	-4.466E-3	0.509	3.480E-2
 0.040	1.086E-3	0.555	3.854E-2
@@ -1059,5 +1059,4 @@ Time (s)	Position (m)	Velocity (ms^-1)	kinetic_energy (J)
 10.580	9.456E-2	0.000	2.649E-30
 10.590	9.456E-2	-0.231	7.762E-3
 10.600	8.993E-2	-0.416	3.132E-2
-10.610	8.623E-2		
-
+10.610	8.623E-2	0.0	0.0

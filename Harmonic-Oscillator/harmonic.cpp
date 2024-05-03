@@ -15,14 +15,12 @@
 #include <iomanip>
 
 const double kInitialTime      = 0.0;
-const double kFinalTime        = 20.0;
-const double kInitialPosition  = 5.0;
 const double kInitialVelocity  = 0.0;
 const double kSpringConstant   = 0.1;
-const double kStepSize         = 1e-2;
+const double kStepSize         = 0.01;
 const int    kDesiredPrecision = 20;
 
-double mass, natural_frequency, natural_frequency_square;
+double mass, natural_frequency, natural_frequency_square, final_time, initial_position;
 
 long double FirstVelocityDerivative(long double velocity, long double position);
 long double FirstPositionDerivative(long double position, long double velocity);
@@ -55,7 +53,7 @@ int main() {
 	natural_frequency_square = kSpringConstant / mass;
 	natural_frequency        = sqrt(natural_frequency_square);
 
-	DataLoop(mass_as_string, "analytic", kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, AnalyticImplementation);
+	DataLoop(mass_as_string, "analytic", kInitialTime, final_time, initial_position, kInitialVelocity, AnalyticImplementation);
 	MethodData(mass_as_string);
 
 	stop = EndSim();
@@ -73,11 +71,11 @@ long double FirstPositionDerivative(long double position, long double velocity) 
 }
 
 long double AnalyticSolutionVelocity(double t) {
-	return -natural_frequency * kInitialPosition * sin(natural_frequency * t);
+	return -natural_frequency * initial_position * sin(natural_frequency * t);
 }
 
 long double AnalyticSolutionPosition(double t) {
-	return kInitialPosition * cos(natural_frequency * t);
+	return initial_position * cos(natural_frequency * t);
 }
 
 long double Energy(long double x, long double v) {
@@ -167,22 +165,32 @@ std::string MassChoice() {
 	switch (mass_option) {
 		case '1':
 			mass = 0.1;
+			initial_position = -0.118;
+			final_time = 11.180;
 			return "100";
 			break;
 		case '2':
 			mass = 0.2;
+			initial_position = -7.53e-2;
+			final_time = 12.110;
 			return "200";
 			break;
 		case '3':
 			mass = 0.25;
+			initial_position = -1.187e-2;
+			final_time = 10.610;
 			return "250";
 			break;
 		case '4':
 			mass = 0.27;
+			initial_position = -5.644e-2;
+			final_time = 10.160;
 			return "270";
 			break;
 		case '5':
 			mass = 0.28;
+			initial_position = -5.300e-2;
+			final_time = 8.740;
 			return "280";
 			break;
 		default:
@@ -206,15 +214,15 @@ void MethodData(std::string& mass_as_string) {
 	switch (method_choice) {
 		case '1':
 			method_name = "euler";
-			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, EulerImplementation);
+			DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, EulerImplementation);
 			break;
 		case '2':
 			method_name = "heun";
-			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, HeunImplementation);
+			DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, HeunImplementation);
 			break;
 		case '3':
 			method_name = "runge-kutta";
-			DataLoop(mass_as_string, method_name, kInitialTime, kFinalTime, kInitialPosition, kInitialVelocity, RungeKuttaImplementation);
+			DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, RungeKuttaImplementation);
 			break;
 		default:
 			std::cout << "Invalid input." << '\n';
