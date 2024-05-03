@@ -1,0 +1,5 @@
+This file is a guide for following data plots.
+
+File must be .pdf
+Name must be: "method-characteristic-comparison.dat"
+Plot must have a key, title.
