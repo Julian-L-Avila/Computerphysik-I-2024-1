@@ -21,6 +21,7 @@ const double kStepSize         = 0.01;
 const int    kDesiredPrecision = 20;
 
 double mass, natural_frequency, natural_frequency_square, final_time, initial_position;
+std::string mass_as_string, method_name;
 
 long double FirstVelocityDerivative(long double velocity, long double position);
 long double FirstPositionDerivative(long double position, long double velocity);
@@ -34,11 +35,12 @@ void EulerImplementation(double& t, long double& previous_x, long double& previo
 void HeunImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
 void RungeKuttaImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
 long double Error(long double real_value, long double value);
-void DataLoop(const std::string& mass_as_string, const std::string& method_name,
+void DataLoop(std::string& mass_as_string, std::string& method_name,
 									double initial_time, double final_time, double initial_position,
 									double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&));
 std::string MassChoice();
 void MethodData(std::string& mass_as_string);
+void PlotData(std::string& mass_as_string, std::string& method_name);
 int EndSim();
 
 
@@ -49,11 +51,12 @@ int main() {
 	std::cout << ":::::::::::::::::::::::::::::::WELCOME TO A MASS-SPRING SIMULATION:::::::::::::::::::::::::::::::" << '\n';
 
 	while (stop == 0) {
-	std::string mass_as_string = MassChoice();
-	natural_frequency_square = kSpringConstant / mass;
-	natural_frequency        = sqrt(natural_frequency_square);
+	mass_as_string = MassChoice();
+	natural_frequency_square   = kSpringConstant / mass;
+	natural_frequency          = sqrt(natural_frequency_square);
 
-	DataLoop(mass_as_string, "analytic", kInitialTime, final_time, initial_position, kInitialVelocity, AnalyticImplementation);
+	method_name = "Analytic";
+	DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, AnalyticImplementation);
 	MethodData(mass_as_string);
 
 	stop = EndSim();
@@ -122,7 +125,7 @@ long double Error(long double real_value, long double value) {
 	return std::abs((real_value - value) / real_value) * 100;
 }
 
-void DataLoop(const std::string& mass_as_string, const std::string& method_name, double initial_time, double final_time, double initial_position, double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&)) {
+void DataLoop(std::string& mass_as_string, std::string& method_name, double initial_time, double final_time, double initial_position, double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&)) {
 	long double previous_x, previous_v, energy, x, v;
 	previous_x = initial_position;
 	previous_v = initial_velocity;
@@ -213,15 +216,15 @@ void MethodData(std::string& mass_as_string) {
 
 	switch (method_choice) {
 		case '1':
-			method_name = "euler";
+			method_name = "Euler";
 			DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, EulerImplementation);
 			break;
 		case '2':
-			method_name = "heun";
+			method_name = "Heun";
 			DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, HeunImplementation);
 			break;
 		case '3':
-			method_name = "runge-kutta";
+			method_name = "Runge-Kutta";
 			DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, RungeKuttaImplementation);
 			break;
 		default:
@@ -229,6 +232,12 @@ void MethodData(std::string& mass_as_string) {
 			return MethodData(mass_as_string);
 			break;
 	}
+}
+
+void PlotData(std::string& mass_as_string, std::string& method_name) {
+	std::string plot_file_name = "./Plot-Data/" + method_name + "-" + mass_as_string + ".gnu";
+
+	std::ofstream plotfile(plot_file_name);
 }
 
 int EndSim() {
