@@ -7,7 +7,6 @@
  * Juan S. Acuña    - 20212107034
  */
 
-#include <cctype>
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -16,7 +15,7 @@
 
 const double kInitialTime      = 0.0;
 const double kInitialVelocity  = 0.0;
-const double kSpringConstant   = 0.1;
+const double kSpringConstant   = 19.49;
 const double kStepSize         = 0.01;
 const int    kDesiredPrecision = 20;
 
@@ -34,15 +33,13 @@ long double EulerMethod(long double previous_x, long double previous_y,
 void EulerImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
 void HeunImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
 void RungeKuttaImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
-long double Error(long double real_value, long double value);
+long double AbsolutePercentageError(long double real_value, long double value);
 void DataLoop(std::string& mass_as_string, std::string& method_name,
 									double initial_time, double final_time, double initial_position,
 									double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&));
 std::string MassChoice();
 void MethodData(std::string& mass_as_string);
 void PlotData(std::string& mass_as_string, std::string& method_name);
-int EndSim();
-
 
 int main() {
 	int stop = 0;
@@ -52,14 +49,26 @@ int main() {
 
 	while (stop == 0) {
 	mass_as_string = MassChoice();
-	natural_frequency_square   = kSpringConstant / mass;
-	natural_frequency          = sqrt(natural_frequency_square);
 
 	method_name = "Analytic";
 	DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, AnalyticImplementation);
 	MethodData(mass_as_string);
 
-	stop = EndSim();
+	PlotData(mass_as_string, method_name);
+	std::string plotfile_name = "./Plot-Data/" + method_name + "-" + mass_as_string + ".gnu";
+	system(("gnuplot -p " + plotfile_name).c_str());
+	std::string plot_pdf = "./Plot-Data/plot-" + method_name + "-" + mass_as_string + ".pdf";
+	system(("atril " + plot_pdf + "&").c_str());
+
+	std::cout << "Press any key to continue or 'q' to quit: ";
+	char choice;
+	std::cin >> choice;
+	if (choice == 'q' || choice == 'Q') {
+		std::cout << "End of script" << std::endl;
+		system("clear");
+		break;
+	}
+	system("clear");
 	}
 
 	return 0;
@@ -121,8 +130,8 @@ void RungeKuttaImplementation(double& t, long double& previous_x, long double& p
 	v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
 }
 
-long double Error(long double real_value, long double value) {
-	return std::abs((real_value - value) / real_value) * 100;
+long double AbsolutePercentageError(long double actual, long double estimated) {
+	return std::abs((actual - estimated) / actual) * 100.0;
 }
 
 void DataLoop(std::string& mass_as_string, std::string& method_name, double initial_time, double final_time, double initial_position, double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&)) {
@@ -130,6 +139,9 @@ void DataLoop(std::string& mass_as_string, std::string& method_name, double init
 	previous_x = initial_position;
 	previous_v = initial_velocity;
 	energy = Energy(previous_x, previous_v);
+
+	natural_frequency_square   = kSpringConstant / mass;
+	natural_frequency          = sqrt(natural_frequency_square);
 
 	std::string path_file_name = "./Approx-Data/" + method_name + "-" + mass_as_string + ".dat";
 
@@ -171,31 +183,26 @@ std::string MassChoice() {
 			initial_position = -0.118;
 			final_time = 11.180;
 			return "100";
-			break;
 		case '2':
 			mass = 0.2;
 			initial_position = -7.53e-2;
 			final_time = 12.110;
 			return "200";
-			break;
 		case '3':
 			mass = 0.25;
 			initial_position = -1.187e-2;
 			final_time = 10.610;
 			return "250";
-			break;
 		case '4':
 			mass = 0.27;
 			initial_position = -5.644e-2;
 			final_time = 10.160;
 			return "270";
-			break;
 		case '5':
 			mass = 0.28;
 			initial_position = -5.300e-2;
 			final_time = 8.740;
 			return "280";
-			break;
 		default:
 			std::cout << "Invalid input." << '\n';
 			return MassChoice();
@@ -205,7 +212,6 @@ std::string MassChoice() {
 
 void MethodData(std::string& mass_as_string) {
 	char method_choice;
-	std::string method_name;
 
 	std::cout << "Select numerical method to compare with experimental and analytical data:" << '\n'
 		<< '\t' << "1. Euler" << '\n'
@@ -238,20 +244,32 @@ void PlotData(std::string& mass_as_string, std::string& method_name) {
 	std::string plot_file_name = "./Plot-Data/" + method_name + "-" + mass_as_string + ".gnu";
 
 	std::ofstream plotfile(plot_file_name);
-}
 
-int EndSim() {
-	char end_sim;
-	std::cout << "Would you like to end the script?" << '\n'
-		<< "Press Yes (y) or No (n): ";
-	std::cin >> end_sim;
+	plotfile << "set grid" << '\n'
+		<< "set xlabel 't [s]'" << '\n'
+		<< "set auto xy" << '\n'
+		<< "set term pdf" << '\n'
+		<< "set output './Plot-Data/plot-" << method_name << "-" << mass_as_string << ".pdf'" << '\n';
 
-	end_sim = std::tolower(end_sim);
-	if (end_sim == 'y') {
-		std::cout << "Script has ended" << std::endl;
-		return 1;
-	}
-	else {
-		return 0;
-	}
+	plotfile << "set tit 'Position'" << '\n'
+		<< "set ylabel 'x [m]'" << '\n'
+		<< "p './Approx-Data/" << method_name << "-" << mass_as_string << ".dat' u 1:2 w l tit '" << method_name << "',"
+		<< "'./Approx-Data/Analytic-" << mass_as_string << ".dat' u 1:2 w l tit 'Analytic',"
+		<< "'./Experimental-Data/experimental-" << mass_as_string << ".dat' u 1:2 w l tit 'Experimental'" << '\n';
+
+	plotfile << "set tit 'Velocity'" << '\n'
+		<< "set ylabel 'v [ms^{-1}]'" << '\n'
+		<< "p './Approx-Data/" << method_name << "-" << mass_as_string << ".dat' u 1:3 w l tit '" << method_name << "',"
+		<< "'./Approx-Data/Analytic-" << mass_as_string << ".dat' u 1:3 w l tit 'Analytic',"
+		<< "'./Experimental-Data/experimental-" << mass_as_string << ".dat' u 1:3 w l tit 'Experimental'" << '\n';
+
+	long double E = Energy(initial_position, kInitialVelocity);
+
+	plotfile << "set tit 'Energy'" << '\n'
+		<< "set ylabel 'E [J]'" << '\n'
+		<< "E = " << E << '\n'
+		<< "p './Approx-Data/" << method_name << "-" << mass_as_string << ".dat' u 1:4 w l tit '" << method_name << "',"
+		<< "'./Approx-Data/Analytic-" << mass_as_string << ".dat' u 1:4 w l tit 'Analytic',"
+		<< "E tit 'Experimental'" << '\n'
+		<< "exit";
 }
