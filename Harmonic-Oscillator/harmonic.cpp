@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <sstream>
 #include <string>
 #include <iomanip>
 
@@ -33,12 +34,13 @@ long double EulerMethod(long double previous_x, long double previous_y,
 void EulerImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
 void HeunImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
 void RungeKuttaImplementation(double& t, long double& previous_x, long double& previous_v, long double& energy, long double& x, long double& v);
-long double AbsolutePercentageError(long double real_value, long double value);
+long double AbsoluteError(long double real_value, long double value);
 void DataLoop(std::string& mass_as_string, std::string& method_name,
-									double initial_time, double final_time, double initial_position,
-									double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&));
+								double initial_time, double final_time, double initial_position,
+								double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&));
 std::string MassChoice();
 void MethodData(std::string& mass_as_string);
+void ErrorData(std::string& mass_as_string, std::string& method_name);
 void PlotData(std::string& mass_as_string, std::string& method_name);
 
 int main() {
@@ -53,11 +55,12 @@ int main() {
 	method_name = "Analytic";
 	DataLoop(mass_as_string, method_name, kInitialTime, final_time, initial_position, kInitialVelocity, AnalyticImplementation);
 	MethodData(mass_as_string);
+	ErrorData(mass_as_string, method_name);
 
 	PlotData(mass_as_string, method_name);
-	std::string plotfile_name = "./Plot-Data/" + method_name + "-" + mass_as_string + ".gnu";
+	std::string plotfile_name = "./Plot-Data/" + method_name + '-' + mass_as_string + ".gnu";
 	system(("gnuplot -p " + plotfile_name).c_str());
-	std::string plot_pdf = "./Plot-Data/plot-" + method_name + "-" + mass_as_string + ".pdf";
+	std::string plot_pdf = "./Plot-Data/plot-" + method_name + '-' + mass_as_string + ".pdf";
 	system(("atril " + plot_pdf + "&").c_str());
 
 	std::cout << "Press any key to continue or 'q' to quit: ";
@@ -130,8 +133,8 @@ void RungeKuttaImplementation(double& t, long double& previous_x, long double& p
 	v = previous_v + kStepSize * (m1 + 2.0 * (m2 + m3) + m4) / 6.0;
 }
 
-long double AbsolutePercentageError(long double actual, long double estimated) {
-	return std::abs((actual - estimated) / actual) * 100.0;
+long double AbsoluteError(long double actual, long double estimated) {
+	return std::abs(actual - estimated);
 }
 
 void DataLoop(std::string& mass_as_string, std::string& method_name, double initial_time, double final_time, double initial_position, double initial_velocity, void(*MethodLoop) (double&, long double&, long double&, long double&, long double&, long double&)) {
@@ -143,7 +146,7 @@ void DataLoop(std::string& mass_as_string, std::string& method_name, double init
 	natural_frequency_square   = kSpringConstant / mass;
 	natural_frequency          = sqrt(natural_frequency_square);
 
-	std::string path_file_name = "./Approx-Data/" + method_name + "-" + mass_as_string + ".dat";
+	std::string path_file_name = "./Approx-Data/" + method_name + '-' + mass_as_string + ".dat";
 
 	std::ofstream datafile(path_file_name);
 
@@ -240,8 +243,52 @@ void MethodData(std::string& mass_as_string) {
 	}
 }
 
+void ErrorData(std::string& mass_as_string, std::string& method_name) {
+	std::string experimental_file_name = "./Experimental-Data/experimental-" + mass_as_string + ".dat";
+	std::string analytical_file_name   = "./Approx-Data/Analytic-" + mass_as_string + ".dat";
+	std::string numerical_file_name    = "./Approx-Data/" + method_name + '-' + mass_as_string + ".dat";
+	std::string error_file_name        = "./Error-Data/Error-" + method_name + '-' + mass_as_string + ".dat";
+
+	std::ifstream experimental_data(experimental_file_name);
+	std::ifstream analytical_data(analytical_file_name);
+	std::ifstream numerical_data(numerical_file_name);
+	std::ofstream error_data(error_file_name);
+
+	error_data << "# Error Data " << method_name << ' ' << mass_as_string << '\n'
+		<< "# Time" << '\t' <<  "Position (Ex-An)" << '\t' << "Position (Ex-Nu)" << '\t' << "Position (An-Nu)" << '\t'
+		<< "Velocity (Ex-An)" << '\t' << "Velocity (Ex-Nu)" << '\t' << "Velocity (An-Nu)" << '\t'
+		<< "Energy (An-Nu)" << '\n';
+
+
+	long double x_ex, v_ex, x_an, v_an, e_an, x_nu, v_nu, e_nu, t;
+
+	std::string line_ex, line_an, line_nu;
+	while (std::getline(experimental_data, line_ex)) {
+		std::getline(analytical_data, line_an);
+		std::getline(numerical_data, line_nu);
+
+		std::stringstream ex(line_ex);
+		std::stringstream an(line_an);
+		std::stringstream nu(line_nu);
+
+		ex >> t >> x_ex >> v_ex;
+		an >> t >> x_an >> v_an >> e_an;
+		nu >> t >> x_nu >> v_nu >> e_nu;
+
+		error_data << std::setprecision(kDesiredPrecision) << t << '\t'
+			<< AbsoluteError(x_ex, x_an) << '\t' << AbsoluteError(x_ex, x_nu) << '\t' << AbsoluteError(x_an, x_nu) << '\t'
+			<< AbsoluteError(v_ex, v_an) << '\t' << AbsoluteError(v_ex, v_nu) << '\t' << AbsoluteError(v_an, v_nu) << '\t'
+			<< AbsoluteError(e_an, e_nu) << '\n';
+	}
+
+	experimental_data.close();
+	analytical_data.close();
+	numerical_data.close();
+	error_data.close();
+}
+
 void PlotData(std::string& mass_as_string, std::string& method_name) {
-	std::string plot_file_name = "./Plot-Data/" + method_name + "-" + mass_as_string + ".gnu";
+	std::string plot_file_name = "./Plot-Data/" + method_name + '-' + mass_as_string + ".gnu";
 
 	std::ofstream plotfile(plot_file_name);
 
@@ -249,17 +296,19 @@ void PlotData(std::string& mass_as_string, std::string& method_name) {
 		<< "set xlabel 't [s]'" << '\n'
 		<< "set auto xy" << '\n'
 		<< "set term pdf" << '\n'
-		<< "set output './Plot-Data/plot-" << method_name << "-" << mass_as_string << ".pdf'" << '\n';
+		<< "set output './Plot-Data/plot-" << method_name << '-' << mass_as_string << ".pdf'" << '\n';
 
 	plotfile << "set tit 'Position'" << '\n'
 		<< "set ylabel 'x [m]'" << '\n'
-		<< "p './Approx-Data/" << method_name << "-" << mass_as_string << ".dat' u 1:2 w l tit '" << method_name << "',"
+		<< "set auto xy" << '\n'
+		<< "p './Approx-Data/" << method_name << '-' << mass_as_string << ".dat' u 1:2 w l tit '" << method_name << "',"
 		<< "'./Approx-Data/Analytic-" << mass_as_string << ".dat' u 1:2 w l tit 'Analytic',"
 		<< "'./Experimental-Data/experimental-" << mass_as_string << ".dat' u 1:2 w l tit 'Experimental'" << '\n';
 
 	plotfile << "set tit 'Velocity'" << '\n'
 		<< "set ylabel 'v [ms^{-1}]'" << '\n'
-		<< "p './Approx-Data/" << method_name << "-" << mass_as_string << ".dat' u 1:3 w l tit '" << method_name << "',"
+		<< "set auto xy" << '\n'
+		<< "p './Approx-Data/" << method_name << '-' << mass_as_string << ".dat' u 1:3 w l tit '" << method_name << "',"
 		<< "'./Approx-Data/Analytic-" << mass_as_string << ".dat' u 1:3 w l tit 'Analytic',"
 		<< "'./Experimental-Data/experimental-" << mass_as_string << ".dat' u 1:3 w l tit 'Experimental'" << '\n';
 
@@ -267,9 +316,35 @@ void PlotData(std::string& mass_as_string, std::string& method_name) {
 
 	plotfile << "set tit 'Energy'" << '\n'
 		<< "set ylabel 'E [J]'" << '\n'
+		<< "set auto xy" << '\n'
 		<< "E = " << E << '\n'
-		<< "p './Approx-Data/" << method_name << "-" << mass_as_string << ".dat' u 1:4 w l tit '" << method_name << "',"
+		<< "p './Approx-Data/" << method_name << '-' << mass_as_string << ".dat' u 1:4 w l tit '" << method_name << "',"
 		<< "'./Approx-Data/Analytic-" << mass_as_string << ".dat' u 1:4 w l tit 'Analytic',"
-		<< "E tit 'Experimental'" << '\n'
+		<< "E tit 'Experimental'" << '\n';
+
+	plotfile << "set tit 'Position Error'" << '\n'
+		<< "set ylabel 'Absolute Error'" << '\n'
+		<< "set key left" << '\n';
+
+	if (method_name == "Runge-Kutta") {
+		plotfile << "set key bottom right" << '\n';
+	}
+
+	plotfile << "set log y" << '\n'
+		<< "set auto xy" << '\n'
+		<< "p './Error-Data/Error-" << method_name << '-' << mass_as_string << ".dat' u 1:2 w l tit 'Exp. vs An.', "
+		<< "'' u 1:3 w l tit 'Exp. vs Nu.', "
+		<< "'' u 1:4 w l tit 'An vs Nu.'" << '\n';
+
+	plotfile << "set tit 'Velocity Error'" << '\n'
+		<< "set auto xy" << '\n'
+		<< "p './Error-Data/Error-" << method_name << '-' << mass_as_string << ".dat' u 1:5 w l tit 'Exp. vs An.', "
+		<< "'' u 1:6 w l tit 'Exp. vs Nu.', "
+		<< "'' u 1:7 w l tit 'An vs Nu.'" << '\n';
+
+	plotfile << "set tit 'Energy Error'" << '\n'
+		<< "set auto xy" << '\n'
+		<< "p './Error-Data/Error-" << method_name << '-' << mass_as_string << ".dat' u 1:8 w l tit 'An. vs Nu.'" << '\n'
 		<< "exit";
+
 }
