@@ -19,7 +19,14 @@ p './Approx-Data/Runge-Kutta-280.dat' u 1:4 w l tit 'Runge-Kutta','./Approx-Data
 set tit 'Position Error'
 set ylabel 'Absolute Error'
 set key left
+set key bottom right
 set log y
 set auto xy
 p './Error-Data/Error-Runge-Kutta-280.dat' u 1:2 w l tit 'Exp. vs An.', '' u 1:3 w l tit 'Exp. vs Nu.', '' u 1:4 w l tit 'An vs Nu.'
+set tit 'Velocity Error'
+set auto xy
+p './Error-Data/Error-Runge-Kutta-280.dat' u 1:5 w l tit 'Exp. vs An.', '' u 1:6 w l tit 'Exp. vs Nu.', '' u 1:7 w l tit 'An vs Nu.'
+set tit 'Energy Error'
+set auto xy
+p './Error-Data/Error-Runge-Kutta-280.dat' u 1:8 w l tit 'An. vs Nu.'
 exit
