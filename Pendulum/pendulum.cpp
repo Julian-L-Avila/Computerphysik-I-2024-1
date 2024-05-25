@@ -4,17 +4,33 @@
  * - Julian Avila - 20212107030
  */
 
-#include <iostream>
 #include <cmath>
 
-double initial_angle, initial_angle_velocity, natural_frequency,
-			natural_frequency_square, length1;
+long double gravity_acceleration, natural_frequency, natural_frequency_square,
+		Amplitude, Shift;
+
+struct StateVariables {
+	double angle_1;
+	double angle_velocity_1;
+	double length_1;
+	double mass_1;
+	double angle_2;
+	double angle_velocity_2;
+	double length_2;
+	double mass_2;
+} InitialConditions;
 
 int main() {
 }
 
 // Pendulum (Linear)
-// TODO Add A and B constants in code
+
+void GetConstantsLinear(StateVariables& InitialConditions) {
+	natural_frequency_square = gravity_acceleration / InitialConditions.length_1;
+	natural_frequency = std::sqrt(natural_frequency_square);
+	Amplitude = InitialConditions.angle_1;
+	Shift = InitialConditions.angle_velocity_1 / natural_frequency;
+}
 
 long double AngleDerivativeLinear(long double& angle_velocity) {
 	return angle_velocity;
@@ -27,24 +43,22 @@ long double VelocityDerivativeLinear(long double& angle,
 }
 
 long double AnalyticAngleLinear(double t) {
-	double A = initial_angle;
-	long double B = initial_angle_velocity / natural_frequency;
-
-	return A * std::cos(natural_frequency * t) +
-		B * std::sin(natural_frequency * t);
+	return Amplitude * std::cos(natural_frequency * t) +
+		Shift * std::sin(natural_frequency * t);
 }
 
 long double AnalyticVelocityLinear(double t) {
-	double A = initial_angle;
-	long double B = initial_angle_velocity / natural_frequency;
-
-	return B * natural_frequency * std::cos(natural_frequency * t) -
-		A * natural_frequency * std::sin(natural_frequency * t);
+	return Shift * natural_frequency * std::cos(natural_frequency * t) -
+		Amplitude * natural_frequency * std::sin(natural_frequency * t);
 }
 
-long double EnergyLinear(long double& angle, long double& angle_velocity) {
-	long double x_position = length1 * std::sin(angle);
-	long double y_position = - length1 * std::cos(angle);
-	long double x_velocity = - angle_velocity * y_position;
-	long double y_velocity = angle_velocity * x_position;
+long double EnergyLinear(long double& angle, long double& angle_velocity,
+		double& mass) {
+	long double y_position = - InitialConditions.length_1 * std::cos(angle);
+
+	long double K = InitialConditions.length_1 * InitialConditions.length_1 *
+		angle_velocity * angle_velocity / 4.0;
+	long double V = mass * gravity_acceleration * y_position;
+
+	return K + V;
 }
