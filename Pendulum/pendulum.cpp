@@ -5,11 +5,14 @@
  */
 
 #include <cmath>
+#include <vector>
 
 long double gravity_acceleration, natural_frequency, natural_frequency_square,
 		Amplitude, Shift;
 
-struct StateVariables {
+std::vector<long double> StateVariables;
+
+struct VariablesAt0 {
 	double angle_1;
 	double angle_velocity_1;
 	double length_1;
@@ -20,19 +23,28 @@ struct StateVariables {
 	double mass_2;
 } InitialConditions;
 
+void GetConstantsLinear(VariablesAt0& InitialConditions);
+long double AngleDerivative(long double& angle_velocity);
+long double VelocityDerivativeLinear(long double& angle,
+		double& natural_frequency_square);
+long double AnalyticAngleLinear(double t);
+long double AnalyticVelocityLinear(double t);
+long double EnergyLinear(long double& angle, long double& angle_velocity,
+		double& mass);
+
 int main() {
 }
 
 // Pendulum (Linear)
 
-void GetConstantsLinear(StateVariables& InitialConditions) {
+void GetConstantsLinear(VariablesAt0& InitialConditions) {
 	natural_frequency_square = gravity_acceleration / InitialConditions.length_1;
 	natural_frequency = std::sqrt(natural_frequency_square);
 	Amplitude = InitialConditions.angle_1;
 	Shift = InitialConditions.angle_velocity_1 / natural_frequency;
 }
 
-long double AngleDerivativeLinear(long double& angle_velocity) {
+long double AngleDerivative(long double& angle_velocity) {
 	return angle_velocity;
 }
 
@@ -61,4 +73,12 @@ long double EnergyLinear(long double& angle, long double& angle_velocity,
 	long double V = mass * gravity_acceleration * y_position;
 
 	return K + V;
+}
+
+// Pendulum (Non-Linear)
+
+long double VelocityDerivative(long double& angle,
+		double& natural_frequency_square) {
+
+	return - natural_frequency_square * std::sin(angle);
 }
