@@ -4,12 +4,16 @@
  * - Julian Avila - 20212107030
  */
 
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <boost/math/special_functions/jacobi_elliptic.hpp>
 
 long double gravity_acceleration, natural_frequency, natural_frequency_square,
 		Amplitude, Shift;
+int DesiredPrecision;
 
 std::vector<long double> StateVariables;
 
@@ -34,8 +38,13 @@ long double EnergyLinear(long double& angle, long double& angle_velocity,
 		double& mass);
 long double VelocityDerivative(long double& angle,
 		double& natural_frequency_square);
-long double EllipticIntegralFirstKind(int& degree, double& angle);
-long double PeriodNotLinear(double& angle, int& degree);
+long double EllipticIntegralFirstKind(int& degree, long double& angle,
+		long double& modulus);
+long double PeriodNotLinear(long double& angle, int& degree);
+long double SinusAmplitudis(int& degree, long double& angle,
+		long double& modulus, double& t);
+long double AnalyticAngleNonLinear(int& degree, double& t,
+		long double& initial_angle);
 
 int main() {
 }
@@ -86,21 +95,37 @@ long double VelocityDerivative(long double& angle,
 	return - natural_frequency_square * std::sin(angle);
 }
 
-long double EllipticIntegralFirstKind(int& degree, double& angle) {
-	long double k = std::sin(angle / 2.0);
+long double EllipticIntegralFirstKind(int& degree, long double& angle,
+		long double& modulus) {
 	long double sum = 1.0;
 	long double product = 1.0;
 	long double product_k = 1.0;
 
 	for (int i = 0; i <= degree + 1; i+=1) {
 		product *= (2.0 * i + 1.0) / (2.0 * i + 2.0);
-		product_k *= k * k;
+		product_k *= modulus * modulus;
 		sum += product * product * product_k;
 	}
 
 	return sum * M_PI / 2.0;
 }
 
-long double PeriodNotLinear(double& angle, int& degree) {
-	return 4 * EllipticIntegralFirstKind(degree, angle) / natural_frequency;
+long double PeriodNotLinear(int& degree, long double& angle,
+		long double& modulus) {
+	return 4 * EllipticIntegralFirstKind(degree, angle, modulus) / natural_frequency;
+}
+
+long double SinusAmplitudis(int& degree, long double& angle,
+		long double& modulus, double& t) {
+	long double K = EllipticIntegralFirstKind(degree, angle, modulus);
+	K -= natural_frequency * t;
+	return boost::math::jacobi_sn(modulus, K);
+}
+
+long double AnalyticAngleNonLinear(int& degree, double& t,
+		long double& initial_angle) {
+	long double modulus = std::sin(initial_angle / 2.0);
+	long double theta = modulus * SinusAmplitudis(degree, initial_angle,
+			modulus, t);
+	return 2.0 * std::asin(theta);
 }
