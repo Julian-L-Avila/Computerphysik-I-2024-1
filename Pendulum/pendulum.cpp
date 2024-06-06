@@ -4,6 +4,7 @@
  * - Julian Avila - 20212107030
  */
 
+#include <iostream>
 #include <cmath>
 #include <vector>
 
@@ -31,8 +32,16 @@ long double AnalyticAngleLinear(double t);
 long double AnalyticVelocityLinear(double t);
 long double EnergyLinear(long double& angle, long double& angle_velocity,
 		double& mass);
+long double VelocityDerivative(long double& angle,
+		double& natural_frequency_square);
+long double EllipticIntegralFirstKind(int& degree, double& angle);
 
 int main() {
+	natural_frequency = std::sqrt(9.81 / 1.0);
+	double angle_1 = 20.0 * M_PI / 180.0;
+	int b = 10000;
+	long double a = EllipticIntegralFirstKind(b, angle_1);
+	std::cout << a;
 }
 
 // Pendulum (Linear)
@@ -50,7 +59,6 @@ long double AngleDerivative(long double& angle_velocity) {
 
 long double VelocityDerivativeLinear(long double& angle,
 		double& natural_frequency_square) {
-
 	return - natural_frequency_square * angle;
 }
 
@@ -79,6 +87,20 @@ long double EnergyLinear(long double& angle, long double& angle_velocity,
 
 long double VelocityDerivative(long double& angle,
 		double& natural_frequency_square) {
-
 	return - natural_frequency_square * std::sin(angle);
+}
+
+long double EllipticIntegralFirstKind(int& degree, double& angle) {
+	long double k = std::sin(angle / 2.0);
+	long double sum = 1.0;
+	long double product = 1.0;
+	long double product_k = 1.0;
+
+	for (int i = 0; i <= degree + 1; i+=1) {
+		product *= (2.0 * i + 1.0) / (2.0 * i + 2.0);
+		product_k *= k * k;
+		sum += product * product * product_k;
+	}
+
+	return 4.0 * sum * M_PI / (2.0 * natural_frequency);
 }
