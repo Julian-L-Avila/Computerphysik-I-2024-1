@@ -35,18 +35,14 @@ long double EnergyLinear(long double& angle, long double& angle_velocity,
 long double VelocityDerivative(long double& angle,
 		double& natural_frequency_square);
 long double EllipticIntegralFirstKind(int& degree, double& angle);
+long double PeriodNotLinear(double& angle, int& degree);
 
 int main() {
-	natural_frequency = std::sqrt(9.81 / 1.0);
-	double angle_1 = 20.0 * M_PI / 180.0;
-	int b = 10000;
-	long double a = EllipticIntegralFirstKind(b, angle_1);
-	std::cout << a;
 }
 
 // Pendulum (Linear)
 
-void GetConstantsLinear(VariablesAt0& InitialConditions) {
+void GetConstants(VariablesAt0& InitialConditions) {
 	natural_frequency_square = gravity_acceleration / InitialConditions.length_1;
 	natural_frequency = std::sqrt(natural_frequency_square);
 	Amplitude = InitialConditions.angle_1;
@@ -102,5 +98,9 @@ long double EllipticIntegralFirstKind(int& degree, double& angle) {
 		sum += product * product * product_k;
 	}
 
-	return 4.0 * sum * M_PI / (2.0 * natural_frequency);
+	return sum * M_PI / 2.0;
+}
+
+long double PeriodNotLinear(double& angle, int& degree) {
+	return 4 * EllipticIntegralFirstKind(degree, angle) / natural_frequency;
 }
