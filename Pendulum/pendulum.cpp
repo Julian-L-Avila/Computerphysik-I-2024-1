@@ -40,7 +40,7 @@ long double VelocityDerivativeLinear(long double& angle,
 		double& natural_frequency_square);
 long double AnalyticAngleLinear(double t);
 long double AnalyticVelocityLinear(double t);
-long double EnergyLinear(long double& angle, long double& angle_velocity,
+long double EnergySimple(long double& angle, long double& angle_velocity,
 		double& mass);
 long double VelocityDerivative(long double& angle,
 		double& natural_frequency_square);
@@ -104,11 +104,11 @@ long double AnalyticVelocityLinear(double t) {
 		Amplitude * natural_frequency * std::sin(natural_frequency * t);
 }
 
-long double EnergyLinear(long double& angle, long double& angle_velocity,
-		double& mass) {
-	long double y_position = - InitialConditions.length_1 * std::cos(angle);
+long double EnergySimple(long double& angle, long double& angle_velocity,
+		double& mass, double& length) {
+	long double y_position = - length * std::cos(angle);
 
-	long double K = InitialConditions.length_1 * InitialConditions.length_1 *
+	long double K = length * length *
 		angle_velocity * angle_velocity / 4.0;
 	long double V = mass * gravity_acceleration * y_position;
 
@@ -165,8 +165,61 @@ long double AnalyticVelocityNonLinear(double& t,
 		long double& initial_angle) {
 	long double cn = CosinusAmplitudis(initial_angle, t);
 	long double dn = DeltaAmplitudis(initial_angle, t);
-
 	return - 2.0 * natural_frequency * modulus * cn * dn;
 }
 
 // Double Pendulum
+
+long double AngleDerivativeDouble(double& t, long double& angle,
+		long double& angle_velocity) {
+	return angle_velocity;
+}
+
+long double VelocityDerivativeDouble1(double& t, long double& angle_1,
+		long double& angle_2, long double& angle_velocity_1,
+		long double& angle_velocity_2, double& mass_1, double& mass_2,
+		double& length_1, double& length_2) {
+	long double angle_diff = angle_1 - angle_2;
+	long double sin_of_diff = std::sin(angle_diff);
+	long double angle_velocity_1_square = angle_velocity_1 * angle_velocity_1;
+	long double angle_velocity_2_square = angle_velocity_2 * angle_velocity_2;
+	long double numerator = 18.0 * mass_2 * std::cos(angle_diff) *
+		(gravity_acceleration * std::sin(angle_2) - length_1 *
+		angle_velocity_1_square * sin_of_diff) - 12.0 *
+		(mass_2 * length_2 * angle_velocity_2_square * sin_of_diff +
+		(mass_1 + 2.0 * mass_2) * gravity_acceleration * std::sin(angle_1));
+	long double denominator = length_1 * (15.0 * mass_2 + 8.0 * mass_1 -
+		9.0 * mass_2 * std::cos(2.0 * angle_diff));
+	return numerator / denominator;
+}
+
+long double VelocityDerivativeDouble2(double& t, long double& angle_1,
+		long double& angle_2, long double& angle_velocity_1,
+		long double& angle_velocity_2, double& mass_1, double& mass_2,
+		double& length_1, double& length_2) {
+	long double angle_diff = angle_1 - angle_2;
+	long double sin_of_diff = std::sin(angle_diff);
+	long double angle_velocity_1_square = angle_velocity_1 * angle_velocity_1;
+	long double angle_velocity_2_square = angle_velocity_2 * angle_velocity_2;
+	long double numerator = 36.0 * std::cos(angle_diff) *
+		(mass_2 * length_2 * angle_velocity_2_square * sin_of_diff +
+		(mass_1 + 2.0 * mass_2) * gravity_acceleration * std::sin(angle_1)) -
+		4.0 * (mass_1 + 3.0 * mass_2) * (gravity_acceleration * std::sin(angle_2) -
+		length_1 * angle_velocity_1_square + sin_of_diff);
+	long double denominator = length_2 * (15.0 * mass_2 + 8.0 * mass_1 - 9.0 *
+			mass_2 * std::cos(2.0 * angle_diff));
+	return numerator / denominator;
+}
+
+long double EnergyDouble(long double& angle_1, long double& angle_2,
+		long double& angle_velocity_1, long double& angle_velocity_2,
+		double& mass_1, double& mass_2, double& length_1, double& length_2) {
+	long double k_1 = mass_1 * length_1 *
+		(length_1 * angle_velocity_1 * angle_velocity_1 / 3.0 -
+			gravity_acceleration * std::cos(angle_1));
+	long double k_2 = mass_2 * length_2 * (length_2 * (angle_velocity_1 *
+			angle_velocity_1 + angle_velocity_2 * angle_velocity_2 / 3.0 +
+			angle_velocity_1 * angle_velocity_2 * std::cos(angle_1 - angle_2)) -
+			gravity_acceleration * (2.0 * std::cos(angle_1) - std::cos(angle_2)));
+	return k_1 + k_2;
+}
