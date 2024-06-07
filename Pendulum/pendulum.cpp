@@ -95,8 +95,8 @@ long double AngleDerivative(double& t, long double& angle,
 	return angle_velocity;
 }
 
-long double VelocityDerivativeLinear(double&t, long double& angle,
-		double& angle_velocity) {
+long double VelocityDerivativeLinear(double& t, double& angle_velocity,
+		long double& angle) {
 	return - natural_frequency_square * angle;
 }
 
@@ -221,10 +221,10 @@ long double VelocityDerivativeDouble2(double& t, long double& angle_1,
 	long double angle_velocity_1_square = angle_velocity_1 * angle_velocity_1;
 	long double angle_velocity_2_square = angle_velocity_2 * angle_velocity_2;
 
-	long double numerator = 36.0 * std::cos(angle_diff) *
+	long double numerator = 18.0 * std::cos(angle_diff) *
 		(mass_2 * length_2 * angle_velocity_2_square * sin_of_diff +
 		(mass_1 + 2.0 * mass_2) * gravity_acceleration * std::sin(angle_1)) -
-		4.0 * (mass_1 + 3.0 * mass_2) * (gravity_acceleration * std::sin(angle_2) -
+		12.0 * (mass_1 + 3.0 * mass_2) * (gravity_acceleration * std::sin(angle_2) -
 		length_1 * angle_velocity_1_square + sin_of_diff);
 
 	long double denominator = length_2 * (15.0 * mass_2 + 8.0 * mass_1 - 9.0 *
