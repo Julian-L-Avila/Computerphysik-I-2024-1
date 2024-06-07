@@ -11,8 +11,9 @@
 #include <vector>
 #include <boost/math/special_functions/jacobi_elliptic.hpp>
 
-long double gravity_acceleration, natural_frequency, natural_frequency_square,
-		Amplitude, Shift, modulus, modulus_square, elliptic_integral;
+long double step_size, gravity_acceleration, natural_frequency,
+		natural_frequency_square, Amplitude, Shift, modulus, modulus_square,
+		elliptic_integral;
 
 int approx_degree;
 
@@ -35,14 +36,12 @@ void LinearConstans(VariablesAt0& InitialConditions);
 void NonLinearConstants(VariablesAt0 InitialConditions);
 void GetConstants(VariablesAt0& InitialConditions, std::vector<int> systems);
 long double AngleDerivative(long double& angle_velocity);
-long double VelocityDerivativeLinear(long double& angle,
-		double& natural_frequency_square);
+long double VelocityDerivativeLinear(long double& angle);
 long double AnalyticAngleLinear(double t);
 long double AnalyticVelocityLinear(double t);
 long double EnergySimple(long double& angle, long double& angle_velocity,
 		double& mass);
-long double VelocityDerivative(long double& angle,
-		double& natural_frequency_square);
+long double VelocityDerivative(long double& angle);
 long double EllipticIntegralFirstKind(long double& angle);
 long double PeriodNotLinear(long double& angle);
 long double SinusAmplitudis(long double& angle, double& t);
@@ -91,12 +90,13 @@ void GetConstants(VariablesAt0& InitialConditions, std::vector<int> systems) {
 
 // Pendulum (Linear)
 
-long double AngleDerivative(long double& angle_velocity) {
+long double AngleDerivative(double& t, long double& angle,
+		long double& angle_velocity) {
 	return angle_velocity;
 }
 
-long double VelocityDerivativeLinear(long double& angle,
-		double& natural_frequency_square) {
+long double VelocityDerivativeLinear(double&t, long double& angle,
+		double& angle_velocity) {
 	return - natural_frequency_square * angle;
 }
 
@@ -110,8 +110,10 @@ long double AnalyticVelocityLinear(double t) {
 		Amplitude * natural_frequency * std::sin(natural_frequency * t);
 }
 
-long double EnergySimple(long double& angle, long double& angle_velocity,
-		double& mass, double& length) {
+long double EnergySimple(long double& angle, long double& angle_velocity) {
+	double length = InitialConditions.length_1;
+	double mass   = InitialConditions.mass_1;
+
 	long double y_position = - length * std::cos(angle);
 
 	long double K = length * length *
@@ -123,8 +125,8 @@ long double EnergySimple(long double& angle, long double& angle_velocity,
 
 // Pendulum (Non-Linear)
 
-long double VelocityDerivative(long double& angle,
-		double& natural_frequency_square) {
+long double VelocityDerivative(double& t, long double& angle,
+		long double& angle_velocity) {
 	return - natural_frequency_square * std::sin(angle);
 }
 
@@ -249,3 +251,9 @@ long double EnergyDouble(long double& angle_1, long double& angle_2,
 
 	return k_1 + k_2;
 }
+
+long double EulerMethod(double& previous_t, long double& previous_x,
+		long double& previous_y, long double (*Derivative)(double&, long double&,
+		long double&)) {
+	return previous_t + step_size * Derivative(previous_t, previous_x, previous_y);
+	}
