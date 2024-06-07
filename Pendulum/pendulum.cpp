@@ -2,6 +2,9 @@
  * UD FCJ - FCMN - Physics
  * Made by:
  * - Julian Avila - 20212107030
+ * - Laura Herrera - 20212107011
+ * - Bryan Martinez - 2021210708
+ * - Juan Acuna - 20212107034
  */
 
 #include <iostream>
