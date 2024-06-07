@@ -4,6 +4,7 @@
  * - Julian Avila - 20212107030
  */
 
+#include <boost/math/special_functions/math_fwd.hpp>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -12,8 +13,11 @@
 #include <boost/math/special_functions/jacobi_elliptic.hpp>
 
 long double gravity_acceleration, natural_frequency, natural_frequency_square,
-		Amplitude, Shift;
-int DesiredPrecision;
+		Amplitude, Shift, modulus, modulus_square, elliptic_integral;
+
+int approx_degree;
+
+const int kDesiredPrecision = 20;
 
 std::vector<long double> StateVariables;
 
@@ -28,7 +32,9 @@ struct VariablesAt0 {
 	double mass_2;
 } InitialConditions;
 
-void GetConstantsLinear(VariablesAt0& InitialConditions);
+void LinearConstans(VariablesAt0& InitialConditions);
+void NonLinearConstants(VariablesAt0 InitialConditions);
+void GetConstants(VariablesAt0& InitialConditions, std::vector<int> systems);
 long double AngleDerivative(long double& angle_velocity);
 long double VelocityDerivativeLinear(long double& angle,
 		double& natural_frequency_square);
@@ -38,25 +44,46 @@ long double EnergyLinear(long double& angle, long double& angle_velocity,
 		double& mass);
 long double VelocityDerivative(long double& angle,
 		double& natural_frequency_square);
-long double EllipticIntegralFirstKind(int& degree, long double& angle,
-		long double& modulus);
-long double PeriodNotLinear(long double& angle, int& degree);
-long double SinusAmplitudis(int& degree, long double& angle,
-		long double& modulus, double& t);
+long double EllipticIntegralFirstKind(long double& angle);
+long double PeriodNotLinear(long double& angle);
+long double SinusAmplitudis(long double& angle, double& t);
+long double CosinusAmplitudis(long double& angle, double& t);
+long double DeltaAmplitudis(long double& angle, double& t);
 long double AnalyticAngleNonLinear(int& degree, double& t,
+		long double& initial_angle);
+long double AnalyticVelocityNonLinear(double& t,
 		long double& initial_angle);
 
 int main() {
 }
 
-// Pendulum (Linear)
-
-void GetConstants(VariablesAt0& InitialConditions) {
+void LinearConstans(VariablesAt0& InitialConditions) {
 	natural_frequency_square = gravity_acceleration / InitialConditions.length_1;
 	natural_frequency = std::sqrt(natural_frequency_square);
 	Amplitude = InitialConditions.angle_1;
 	Shift = InitialConditions.angle_velocity_1 / natural_frequency;
 }
+
+void NonLinearConstants(VariablesAt0 InitialConditions) {
+	modulus = std::sin(InitialConditions.angle_1 / 2.0);
+	modulus_square = modulus * modulus;
+	elliptic_integral = EllipticIntegralFirstKind(Amplitude);
+}
+
+void GetConstants(VariablesAt0& InitialConditions, std::vector<int> systems) {
+	if (systems[0] == 1) {
+		LinearConstans(InitialConditions);
+	};
+
+	if (systems[1] == 1) {
+		NonLinearConstants(InitialConditions);
+	}
+
+	if (systems[2] == 1) {
+	}
+}
+
+// Pendulum (Linear)
 
 long double AngleDerivative(long double& angle_velocity) {
 	return angle_velocity;
@@ -95,37 +122,51 @@ long double VelocityDerivative(long double& angle,
 	return - natural_frequency_square * std::sin(angle);
 }
 
-long double EllipticIntegralFirstKind(int& degree, long double& angle,
-		long double& modulus) {
+long double EllipticIntegralFirstKind(long double& angle) {
 	long double sum = 1.0;
 	long double product = 1.0;
 	long double product_k = 1.0;
 
-	for (int i = 0; i <= degree + 1; i+=1) {
+	for (int i = 0; i <= approx_degree + 1; i+=1) {
 		product *= (2.0 * i + 1.0) / (2.0 * i + 2.0);
-		product_k *= modulus * modulus;
+		product_k *= modulus_square;
 		sum += product * product * product_k;
 	}
 
 	return sum * M_PI / 2.0;
 }
 
-long double PeriodNotLinear(int& degree, long double& angle,
-		long double& modulus) {
-	return 4 * EllipticIntegralFirstKind(degree, angle, modulus) / natural_frequency;
+long double PeriodNotLinear(long double& angle) {
+	return 4 * EllipticIntegralFirstKind(angle) / natural_frequency;
 }
 
-long double SinusAmplitudis(int& degree, long double& angle,
-		long double& modulus, double& t) {
-	long double K = EllipticIntegralFirstKind(degree, angle, modulus);
-	K -= natural_frequency * t;
-	return boost::math::jacobi_sn(modulus, K);
+long double SinusAmplitudis(long double& angle, double& t) {
+	elliptic_integral -= natural_frequency * t;
+	return boost::math::jacobi_sn(modulus_square, elliptic_integral);
 }
 
-long double AnalyticAngleNonLinear(int& degree, double& t,
+long double CosinusAmplitudis(long double& angle, double& t) {
+	elliptic_integral -= natural_frequency * t;
+	return boost::math::jacobi_cn(modulus_square, elliptic_integral);
+}
+
+long double DeltaAmplitudis(long double& angle, double& t) {
+	elliptic_integral -= natural_frequency * t;
+	return boost::math::jacobi_dn(modulus_square, elliptic_integral);
+}
+
+long double AnalyticAngleNonLinear(double& t,
 		long double& initial_angle) {
-	long double modulus = std::sin(initial_angle / 2.0);
-	long double theta = modulus * SinusAmplitudis(degree, initial_angle,
-			modulus, t);
+	long double theta = modulus * SinusAmplitudis(initial_angle, t);
 	return 2.0 * std::asin(theta);
 }
+
+long double AnalyticVelocityNonLinear(double& t,
+		long double& initial_angle) {
+	long double cn = CosinusAmplitudis(initial_angle, t);
+	long double dn = DeltaAmplitudis(initial_angle, t);
+
+	return - 2.0 * natural_frequency * modulus * cn * dn;
+}
+
+// Double Pendulum
